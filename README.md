@@ -54,6 +54,36 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Deploy on Vercel
+
+This project is ready to deploy as a standard **Next.js App Router** application.
+
+### 1) Import repository
+- Go to Vercel and click **Add New Project**.
+- Import this Git repository.
+- Vercel should auto-detect the framework as **Next.js**.
+
+### 2) Build settings
+- Install command: `npm install`
+- Build command: `npm run build`
+- Output directory: leave empty (default for Next.js)
+- Node.js version: **20+** (also defined in `package.json` `engines`)
+
+### 3) Environment variables
+- No required environment variables for the current MVP.
+- Data is static (`content/seed.json`) and user state is browser-local (`localStorage`).
+
+### 4) Runtime behavior notes
+- Because progress is stored in `localStorage`, saved progress is per-browser/per-device.
+- No server-side database/auth configuration is needed for deployment.
+- HTTPS on Vercel enables secure access to external audio URLs used by packs.
+
+### 5) Recommended post-deploy checks
+- Open `/`, `/library`, `/review`, `/settings`.
+- Verify that audio playback works in `/pack/[id]`.
+- Save a phrase, refresh, and verify progress is preserved in the same browser.
+- Export/import progress once from Settings.
+
 ## Content structure
 
 `content/seed.json` includes:

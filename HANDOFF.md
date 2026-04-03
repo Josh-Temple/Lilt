@@ -1,5 +1,29 @@
 # Handoff Notes
 
+## Latest session update (2026-04-03)
+
+### Goal
+Prepare the repository for Vercel deployment.
+
+### Changes made
+- Added Node engine constraint (`>=20.0.0`) in `package.json` to align runtime expectations for Vercel.
+- Updated `README.md` with a dedicated **Deploy on Vercel** section:
+  - project import steps
+  - build/runtime settings
+  - environment variable expectations
+  - post-deploy verification checklist
+
+### Validation status
+- Attempted to install dependencies with `npm install`, but package download was blocked by registry access policy (`403 Forbidden`), so build/lint/typecheck could not be executed in this environment.
+
+### Suggested next action
+1. In a network-enabled environment (or CI), run:
+   - `npm install`
+   - `npm run typecheck`
+   - `npm run lint`
+   - `npm run build`
+2. Connect the repo to Vercel and deploy with default Next.js settings.
+
 ## Current completion status
 
 Implemented MVP foundation from scratch as a local-first Next.js app.
