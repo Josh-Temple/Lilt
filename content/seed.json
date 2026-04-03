@@ -1,0 +1,134 @@
+{
+  "packs": [
+    {
+      "id": "requests-cafe",
+      "title": "At the café",
+      "level": "A2",
+      "topic": "requests",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "durationSec": 62,
+      "transcript": "Hey, could I get a refill when you have a second? Also, can I get this to go? No rush, just whenever works.",
+      "phraseIds": ["could-i-get", "when-you-have-a-second", "to-go", "whenever-works"],
+      "tags": ["requests", "cafe", "polite"]
+    },
+    {
+      "id": "clarify-meeting",
+      "title": "Clarifying a plan",
+      "level": "B1",
+      "topic": "clarification",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "durationSec": 54,
+      "transcript": "Just to make sure we're on the same page, are we meeting at noon or after lunch? Sorry, can you run that by me one more time?",
+      "phraseIds": ["just-to-make-sure", "on-the-same-page", "run-that-by-me", "one-more-time"],
+      "tags": ["clarification", "meeting"]
+    },
+    {
+      "id": "reactions-update",
+      "title": "Reacting to updates",
+      "level": "B1",
+      "topic": "reactions",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      "durationSec": 49,
+      "transcript": "That makes sense. I didn't see that coming, but it sounds fair. Good call on checking with the team first.",
+      "phraseIds": ["that-makes-sense", "didnt-see-that-coming", "sounds-fair", "good-call"],
+      "tags": ["reactions", "work"]
+    },
+    {
+      "id": "opinions-feature",
+      "title": "Sharing opinions",
+      "level": "B2",
+      "topic": "opinions",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+      "durationSec": 57,
+      "transcript": "If you ask me, the simpler version is easier to maintain. I'm not totally sold on adding another screen right now.",
+      "phraseIds": ["if-you-ask-me", "easier-to-maintain", "not-totally-sold", "right-now"],
+      "tags": ["opinions", "product"]
+    },
+    {
+      "id": "uncertainty-news",
+      "title": "Handling uncertainty",
+      "level": "B1",
+      "topic": "uncertainty",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+      "durationSec": 52,
+      "transcript": "I might be wrong, but I get the feeling this deadline could move. Let's wait and see before we lock anything in.",
+      "phraseIds": ["might-be-wrong", "get-the-feeling", "wait-and-see", "lock-anything-in"],
+      "tags": ["uncertainty", "planning"]
+    },
+    {
+      "id": "planning-weekend",
+      "title": "Planning together",
+      "level": "A2",
+      "topic": "planning",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+      "durationSec": 46,
+      "transcript": "How about we start early and wrap up by noon? I'm free after two, so that works for me.",
+      "phraseIds": ["how-about-we", "wrap-up-by", "im-free-after", "works-for-me"],
+      "tags": ["planning", "friends"]
+    },
+    {
+      "id": "smalltalk-neighborhood",
+      "title": "Everyday small talk",
+      "level": "A2",
+      "topic": "small talk",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+      "durationSec": 50,
+      "transcript": "It's been a while. Have you been around this area long? The weather finally cleared up, which is nice.",
+      "phraseIds": ["its-been-a-while", "been-around", "cleared-up", "which-is-nice"],
+      "tags": ["small-talk", "daily"]
+    },
+    {
+      "id": "requests-office",
+      "title": "Office requests",
+      "level": "B1",
+      "topic": "requests",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+      "durationSec": 58,
+      "transcript": "Could you take a quick look at this draft when you get a chance? Feel free to leave comments directly in the doc.",
+      "phraseIds": ["could-you-take", "when-you-get-a-chance", "feel-free-to", "leave-comments"],
+      "tags": ["requests", "office"]
+    }
+  ],
+  "phrases": [
+    {"id":"could-i-get","text":"Could I get ...?","corePattern":"Could I get + noun","meaningJa":"〜をいただけますか？","meaningEn":"Polite request","notes":"Common in service situations.","difficulty":1,"variants":["Can I get ...?"],"contrasts":["Give me ..."],"examples":["Could I get a refill?"],"tags":["request"]},
+    {"id":"when-you-have-a-second","text":"when you have a second","corePattern":"when you have + time","meaningJa":"少し時間があるときに","difficulty":1,"variants":["when you have a minute"],"contrasts":["right now"],"examples":["Check this when you have a second."],"tags":["request"]},
+    {"id":"to-go","text":"to go","corePattern":"to go","meaningJa":"持ち帰りで","difficulty":1,"variants":["for here / to go"],"contrasts":["for here"],"examples":["Can I get this to go?"],"tags":["cafe"]},
+    {"id":"whenever-works","text":"whenever works","corePattern":"whenever works","meaningJa":"いつでも都合がよいときで","difficulty":1,"variants":["whenever is good"],"contrasts":["ASAP"],"examples":["No rush, whenever works."],"tags":["polite"]},
+
+    {"id":"just-to-make-sure","text":"just to make sure","corePattern":"just to make sure + clause","meaningJa":"念のため確認すると","difficulty":1,"variants":["just checking"],"contrasts":["I assume"],"examples":["Just to make sure, we're meeting at noon?"],"tags":["clarification"]},
+    {"id":"on-the-same-page","text":"on the same page","corePattern":"be on the same page","meaningJa":"認識が一致している","difficulty":2,"variants":["aligned"],"contrasts":["misaligned"],"examples":["I want us on the same page."],"tags":["clarification"]},
+    {"id":"run-that-by-me","text":"run that by me","corePattern":"run + idea + by + person","meaningJa":"（案を）聞かせる","difficulty":2,"variants":["walk me through that"],"contrasts":["skip details"],"examples":["Can you run that by me again?"],"tags":["clarification"]},
+    {"id":"one-more-time","text":"one more time","corePattern":"one more time","meaningJa":"もう一度","difficulty":1,"variants":["again"],"contrasts":["once"],"examples":["Say that one more time."],"tags":["clarification"]},
+
+    {"id":"that-makes-sense","text":"That makes sense.","corePattern":"make sense","meaningJa":"なるほど、筋が通ってる","difficulty":1,"variants":["I see your point."],"contrasts":["That doesn't add up."],"examples":["Yeah, that makes sense."],"tags":["reaction"]},
+    {"id":"didnt-see-that-coming","text":"I didn't see that coming.","corePattern":"didn't see + event + coming","meaningJa":"それは予想外だった","difficulty":2,"variants":["That caught me off guard."],"contrasts":["I expected that."],"examples":["I didn't see that coming."],"tags":["reaction"]},
+    {"id":"sounds-fair","text":"it sounds fair","corePattern":"sound + adjective","meaningJa":"公平そうだ","difficulty":1,"variants":["seems fair"],"contrasts":["sounds unfair"],"examples":["It sounds fair to me."],"tags":["reaction"]},
+    {"id":"good-call","text":"Good call.","corePattern":"good call on + noun/verb-ing","meaningJa":"いい判断だね","difficulty":1,"variants":["smart move"],"contrasts":["bad call"],"examples":["Good call on checking first."],"tags":["reaction"]},
+
+    {"id":"if-you-ask-me","text":"If you ask me, ...","corePattern":"If you ask me + opinion","meaningJa":"私に言わせれば","difficulty":1,"variants":["In my view"],"contrasts":["Objectively"],"examples":["If you ask me, we should simplify."],"tags":["opinion"]},
+    {"id":"easier-to-maintain","text":"easier to maintain","corePattern":"easier to + verb","meaningJa":"保守しやすい","difficulty":2,"variants":["easier to support"],"contrasts":["hard to maintain"],"examples":["This design is easier to maintain."],"tags":["opinion"]},
+    {"id":"not-totally-sold","text":"I'm not totally sold on ...","corePattern":"not totally sold on + noun/gerund","meaningJa":"〜にはまだ乗り気ではない","difficulty":2,"variants":["I'm not convinced yet."],"contrasts":["I'm fully on board."],"examples":["I'm not totally sold on adding that feature."],"tags":["opinion"]},
+    {"id":"right-now","text":"right now","corePattern":"right now","meaningJa":"今のところは","difficulty":1,"variants":["at the moment"],"contrasts":["later on"],"examples":["Let's skip it right now."],"tags":["time"]},
+
+    {"id":"might-be-wrong","text":"I might be wrong, but ...","corePattern":"I might be wrong, but + clause","meaningJa":"違うかもしれないけど","difficulty":1,"variants":["I could be mistaken, but ..."],"contrasts":["I'm certain that ..."],"examples":["I might be wrong, but this seems risky."],"tags":["uncertainty"]},
+    {"id":"get-the-feeling","text":"I get the feeling ...","corePattern":"get the feeling + clause","meaningJa":"〜な気がする","difficulty":2,"variants":["I have a feeling ..."],"contrasts":["I know for sure ..."],"examples":["I get the feeling plans may change."],"tags":["uncertainty"]},
+    {"id":"wait-and-see","text":"wait and see","corePattern":"wait and see","meaningJa":"様子を見る","difficulty":1,"variants":["hold off for now"],"contrasts":["decide now"],"examples":["Let's wait and see."],"tags":["uncertainty"]},
+    {"id":"lock-anything-in","text":"lock anything in","corePattern":"lock + plan + in","meaningJa":"（予定を）確定する","difficulty":2,"variants":["finalize"],"contrasts":["keep it flexible"],"examples":["Don't lock anything in yet."],"tags":["planning"]},
+
+    {"id":"how-about-we","text":"How about we ...?","corePattern":"How about we + verb","meaningJa":"〜するのはどう？","difficulty":1,"variants":["What if we ...?"],"contrasts":["Let's definitely ..."],"examples":["How about we start early?"],"tags":["planning"]},
+    {"id":"wrap-up-by","text":"wrap up by ...","corePattern":"wrap up by + time","meaningJa":"〜までに終える","difficulty":1,"variants":["finish by"],"contrasts":["run over"],"examples":["Let's wrap up by noon."],"tags":["planning"]},
+    {"id":"im-free-after","text":"I'm free after ...","corePattern":"be free after + time","meaningJa":"〜以降は空いている","difficulty":1,"variants":["I'm available after ..."],"contrasts":["I'm tied up until ..."],"examples":["I'm free after two."],"tags":["planning"]},
+    {"id":"works-for-me","text":"that works for me","corePattern":"work for + person","meaningJa":"それで大丈夫","difficulty":1,"variants":["sounds good to me"],"contrasts":["that won't work for me"],"examples":["Friday works for me."],"tags":["planning"]},
+
+    {"id":"its-been-a-while","text":"It's been a while.","corePattern":"It's been a while","meaningJa":"久しぶりだね","difficulty":1,"variants":["Long time no see."],"contrasts":["We just met."],"examples":["Hey, it's been a while."],"tags":["small-talk"]},
+    {"id":"been-around","text":"Have you been around ...?","corePattern":"been around + place","meaningJa":"この辺りにいた？/詳しい？","difficulty":2,"variants":["Do you live around here?"],"contrasts":["first time here"],"examples":["Have you been around this area long?"],"tags":["small-talk"]},
+    {"id":"cleared-up","text":"cleared up","corePattern":"clear up","meaningJa":"（天気などが）回復する","difficulty":1,"variants":["brightened up"],"contrasts":["clouded over"],"examples":["The weather finally cleared up."],"tags":["small-talk"]},
+    {"id":"which-is-nice","text":"which is nice","corePattern":"which is + adjective","meaningJa":"それはいいよね","difficulty":1,"variants":["which is great"],"contrasts":["which is annoying"],"examples":["It cooled down, which is nice."],"tags":["small-talk"]},
+
+    {"id":"could-you-take","text":"Could you take a quick look ...?","corePattern":"Could you + verb + quick look","meaningJa":"軽く見てもらえますか","difficulty":1,"variants":["Could you review this?"],"contrasts":["Review this now."],"examples":["Could you take a quick look at this draft?"],"tags":["request"]},
+    {"id":"when-you-get-a-chance","text":"when you get a chance","corePattern":"when you get a chance","meaningJa":"手が空いたら","difficulty":1,"variants":["when you have a moment"],"contrasts":["immediately"],"examples":["Reply when you get a chance."],"tags":["request"]},
+    {"id":"feel-free-to","text":"Feel free to ...","corePattern":"Feel free to + verb","meaningJa":"遠慮なく〜してください","difficulty":1,"variants":["Please go ahead and ..."],"contrasts":["Please avoid ..."],"examples":["Feel free to ask questions."],"tags":["request"]},
+    {"id":"leave-comments","text":"leave comments","corePattern":"leave comments (in/on)","meaningJa":"コメントを残す","difficulty":1,"variants":["add notes"],"contrasts":["keep silent"],"examples":["Leave comments in the doc."],"tags":["office"]}
+  ],
+  "links": []
+}
