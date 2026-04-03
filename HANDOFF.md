@@ -105,3 +105,20 @@ Resolve Vercel production build failure caused by blocked vulnerable Next.js ver
 ### Docs change
 - Added a dedicated README section explaining the phased Supabase adoption path (UI only -> DB/Auth -> Storage/audio).
 
+
+
+## Minimalist UI refresh session update (2026-04-03)
+
+### Goal
+Shift learner-facing UI from card-based visual patterns to a refined minimal style centered on typography, spacing, separators, and icon-led actions.
+
+### What changed
+1. Reworked core learner pages (`/`, `/library`, `/pack/[id]`, `/phrase/[id]`, `/review`, `/settings`) to remove heavy card emphasis and use section dividers and cleaner hierarchy.
+2. Added reusable icon system (`components/ui/Icon.tsx`) and replaced many text labels with icons for navigation and frequent actions.
+3. Replaced text tab bar with icon-first bottom navigation (`components/ui/BottomNav.tsx`) including active route state.
+4. Updated global styles to support minimalist primitives (`section`, `field`, refined button styles) while preserving compatibility classes used in untouched admin flows.
+
+### Follow-up recommendations
+- Add tooltips for icon-only controls on desktop hover for improved discoverability.
+- Validate color contrast and tap target sizes with accessibility checks before production release.
+- Consider a design token pass (type scale, spacing scale) for stricter visual consistency as features expand.

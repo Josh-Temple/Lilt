@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Icon } from "@/components/ui/Icon";
 import { useProgress } from "@/lib/useProgress";
 import { usePacks } from "@/lib/usePacks";
 
@@ -27,53 +28,66 @@ export default function LibraryPage() {
   }, [level, packs, query, topic]);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Library</h1>
+    <div>
+      <header className="pb-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Library</h1>
+      </header>
 
-      <div className="card space-y-2">
-        <input
-          className="w-full rounded-lg border p-2"
-          placeholder="Search packs"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <div className="grid grid-cols-2 gap-2">
-          <select className="rounded-lg border p-2" value={level} onChange={(e) => setLevel(e.target.value)}>
-            <option value="all">All levels</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
-          </select>
-          <select className="rounded-lg border p-2" value={topic} onChange={(e) => setTopic(e.target.value)}>
-            <option value="all">All topics</option>
-            {topics.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+      <section className="section-tight space-y-4">
+        <label className="flex items-center gap-2 text-slate-500">
+          <Icon name="search" />
+          <input
+            className="field"
+            placeholder="Search packs"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+
+        <div className="grid grid-cols-2 gap-4">
+          <label className="space-y-1 text-slate-500">
+            <span className="inline-flex"><Icon name="level" /></span>
+            <select className="field" value={level} onChange={(e) => setLevel(e.target.value)}>
+              <option value="all">All levels</option>
+              <option value="A2">A2</option>
+              <option value="B1">B1</option>
+              <option value="B2">B2</option>
+            </select>
+          </label>
+
+          <label className="space-y-1 text-slate-500">
+            <span className="inline-flex"><Icon name="topic" /></span>
+            <select className="field" value={topic} onChange={(e) => setTopic(e.target.value)}>
+              <option value="all">All topics</option>
+              {topics.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-2">
+      <section className="section-tight divide-y divide-slate-100">
         {filtered.map((pack) => {
           const completed = progress?.packProgress[pack.id]?.completed;
           const savedCount = pack.phraseIds.filter((id) => progress?.phraseProgress[id]?.saved).length;
 
           return (
-            <Link href={`/pack/${pack.id}`} key={pack.id} className="card block">
+            <Link href={`/pack/${pack.id}`} key={pack.id} className="block py-4">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="font-medium">{pack.title}</h2>
-                <span className="text-xs text-slate-500">{pack.level}</span>
+                <h2 className="font-medium tracking-tight">{pack.title}</h2>
+                <span className="text-xs tracking-[0.15em] text-slate-400">{pack.level}</span>
               </div>
-              <p className="text-sm text-slate-600">{pack.topic}</p>
-              <p className="mt-1 text-xs text-slate-500">
-                Saved {savedCount}/{pack.phraseIds.length} · {completed ? "Completed" : "In progress"}
+              <p className="mt-1 text-sm text-slate-500">{pack.topic}</p>
+              <p className="mt-2 text-xs text-slate-400">
+                {savedCount}/{pack.phraseIds.length} · {completed ? "Complete" : "Progress"}
               </p>
             </Link>
           );
         })}
-      </div>
+      </section>
     </div>
   );
 }

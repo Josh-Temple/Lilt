@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Icon } from "@/components/ui/Icon";
 import { progressStore } from "@/lib/progressStore";
 import { useProgress } from "@/lib/useProgress";
 
@@ -34,31 +35,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Settings</h1>
-      <section className="card space-y-2">
-        <h2 className="font-medium">Progress</h2>
-        <button className="btn-secondary" onClick={onExport}>
-          Export progress
-        </button>
+    <div>
+      <header className="pb-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+      </header>
+
+      <section className="section space-y-4">
+        <div className="flex gap-6">
+          <button className="btn" onClick={onExport} aria-label="Export progress">
+            <Icon name="download" />
+          </button>
+          <button className="btn" onClick={onImport} aria-label="Import progress">
+            <Icon name="upload" />
+          </button>
+          <button className="btn" onClick={onReset} aria-label="Reset progress">
+            <Icon name="refresh" />
+          </button>
+        </div>
         <textarea
-          className="min-h-32 w-full rounded-lg border p-2 font-mono text-xs"
+          className="min-h-36 w-full border border-slate-200 p-3 font-mono text-xs"
           placeholder="Paste exported JSON"
           value={importText}
           onChange={(event) => setImportText(event.target.value)}
         />
-        <button className="btn-secondary" onClick={onImport}>
-          Import progress
-        </button>
-        <button className="btn-secondary" onClick={onReset}>
-          Reset progress
-        </button>
       </section>
 
-      <section className="card">
-        <h2 className="font-medium">App info</h2>
-        <p className="text-sm text-slate-600">Lilt MVP v0.1 · local-first phrase learning app.</p>
-        {message && <p className="pt-2 text-sm">{message}</p>}
+      <section className="section text-sm text-slate-500">
+        <p>Lilt MVP v0.1 · local-first phrase learning app.</p>
+        {message && <p className="pt-2 text-ink">{message}</p>}
       </section>
     </div>
   );
