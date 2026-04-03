@@ -13,7 +13,7 @@ const navItems = [
   { href: "/library", label: "Library" },
   { href: "/review", label: "Review" },
   { href: "/settings", label: "Settings" },
-];
+] as const;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
