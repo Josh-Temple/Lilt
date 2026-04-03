@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { contentService } from "@/lib/content";
 import { useProgress } from "@/lib/useProgress";
+import { usePacks } from "@/lib/usePacks";
 
 export default function LibraryPage() {
-  const packs = contentService.getPacks();
+  const packs = usePacks();
   const { progress } = useProgress();
   const [level, setLevel] = useState("all");
   const [topic, setTopic] = useState("all");

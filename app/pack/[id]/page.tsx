@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { contentService } from "@/lib/content";
+import { useState } from "react";
 import { progressStore } from "@/lib/progressStore";
 import { useProgress } from "@/lib/useProgress";
+import { usePackDetail } from "@/lib/usePacks";
 
 function highlightTranscript(transcript: string, needles: string[]) {
   let rendered = transcript;
@@ -29,13 +29,12 @@ function highlightTranscript(transcript: string, needles: string[]) {
 
 export default function LearnPackPage() {
   const params = useParams<{ id: string }>();
-  const pack = contentService.getPack(params.id);
-  const phrases = useMemo(() => contentService.getPhrasesByPack(params.id), [params.id]);
+  const { pack, phrases, loading } = usePackDetail(params.id);
   const { progress, update } = useProgress();
   const [showTranscript, setShowTranscript] = useState(true);
 
-  if (!pack) return notFound();
-  if (!progress) return <p>Loading...</p>;
+  if (!pack && !loading) return notFound();
+  if (!progress || !pack) return <p>Loading...</p>;
 
   const toggleSaved = (phraseId: string) => update((draft) => progressStore.toggleSaved(draft, phraseId));
   const toggleConfusing = (phraseId: string) => update((draft) => progressStore.toggleFlag(draft, phraseId, "confusing"));

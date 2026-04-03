@@ -3,74 +3,75 @@
 ## Latest session update (2026-04-03)
 
 ### Goal
-Prepare the repository for Vercel deployment.
+Implement the minimum Supabase-ready architecture and private admin workflow for content authoring.
 
-### Changes made
-- Added Node engine constraint (`>=20.0.0`) in `package.json` to align runtime expectations for Vercel.
-- Updated `README.md` with a dedicated **Deploy on Vercel** section:
-  - project import steps
-  - build/runtime settings
-  - environment variable expectations
-  - post-deploy verification checklist
+### What was added
 
-### Validation status
-- Attempted to install dependencies with `npm install`, but package download was blocked by registry access policy (`403 Forbidden`), so build/lint/typecheck could not be executed in this environment.
+1. **Supabase data model + security (SQL migration)**
+   - Added `supabase/migrations/20260403_001_initial_admin_learning.sql`.
+   - Includes tables for shared content (`packs`, `phrases`, `pack_phrases`, `audio_assets`), per-user progress (`user_phrase_progress`, `user_pack_progress`), and admin profile (`profiles`).
+   - Includes `updated_at` triggers and RLS policies:
+     - content write = admin only
+     - progress read/write = row owner only
 
-### Suggested next action
-1. In a network-enabled environment (or CI), run:
-   - `npm install`
-   - `npm run typecheck`
-   - `npm run lint`
-   - `npm run build`
-2. Connect the repo to Vercel and deploy with default Next.js settings.
+2. **Supabase client utilities**
+   - Added browser/server Supabase client helpers:
+     - `lib/supabase/client.ts`
+     - `lib/supabase/server.ts`
+   - Refactored shared request/env/token handling into `lib/supabase/http.ts` to reduce duplicated networking code.
 
-## Current completion status
+3. **Admin UI (creator-only lightweight console)**
+   - Added routes:
+     - `/admin`
+     - `/admin/packs/new`
+     - `/admin/packs/[id]/edit`
+   - Added reusable admin components:
+     - `components/admin/AdminShell.tsx`
+     - `components/admin/PackEditor.tsx`
+   - Features currently in UI:
+     - request magic link
+     - create/update pack metadata + publish status
+     - add phrase and pack link (sort/role/index/time fields)
+     - upload pack-full audio and insert `audio_assets` row
 
-Implemented MVP foundation from scratch as a local-first Next.js app.
+4. **Learning-side DB read bridge (with fallback)**
+   - Added API routes:
+     - `app/api/packs/route.ts`
+     - `app/api/packs/[id]/route.ts`
+   - Updated client hooks/pages to consume API-backed packs:
+     - `lib/usePacks.ts`
+     - `app/library/page.tsx`
+     - `app/pack/[id]/page.tsx`
+   - Current behavior:
+     - If Supabase env/config unavailable, seed JSON fallback still works.
 
-### Completed
-- Project bootstrap with Next.js + TypeScript + Tailwind.
-- Domain schema (`Pack`, `Phrase`, `PackPhraseLink`, `Progress`).
-- Seed content (8 packs, 32 phrases).
-- Content access layer abstraction.
-- Versioned local progress store with migration boundary.
-- Separated review scheduler module.
-- Implemented screens:
-  - Home
-  - Library
-  - Learn Pack
-  - Review
-  - Phrase Detail
-  - Settings
-- Added manifest for PWA-friendly metadata.
-- Updated README with product definition + setup + architecture.
+5. **Project/docs updates**
+   - Rewrote `README.md` for the new architecture, setup, and migration workflow.
+   - Replaced the legacy ESLint flat-config file with `.eslintrc.json` for compatibility with `next lint`.
 
-## Not implemented yet
-- Explicit `segments` based phrase-level replay UI (current audio is full-track).
-- Strong transcript span mapping (current highlight is lightweight string-based).
-- Dedicated completion-marking UX per pack.
-- Advanced scheduler (FSRS or adaptive memory model).
-- Robust offline service worker caching strategy.
-- Automated tests.
+### Open items / recommended next steps
 
-## Priority suggestions for next session
-1. Add deterministic phrase span mapping in content data (`links` + optional timestamps).
-2. Improve Learn Pack with segment looping when timestamps exist.
-3. Add unit tests for:
-   - scheduler behavior
-   - progress migration/load/save
-   - content lookups
-4. Add simple E2E smoke test for critical flows.
-5. Improve accessibility (focus states, ARIA labels, contrast review).
+1. **Server-side admin guard**
+   - Current admin validation is primarily client-driven (`profiles.is_admin` check in UI).
+   - Add strict server-side middleware/route protection before production.
 
-## Data model assumptions
-- `UserProgressV1` is source-of-truth in localStorage key `lilt-progress`.
-- Phrase progress exists lazily and is backfilled by `ensureSeed`.
-- Saved phrases are review candidates; due queue is date-based.
-- Content source is static `content/seed.json` and wrapped via `contentService`.
+2. **Storage signed URL flow**
+   - Learning pages currently keep audio handling minimal.
+   - Add server endpoint to generate signed URLs from `audio_assets.storage_path`.
 
-## Change safety notes
-- Keep scheduler logic isolated in `lib/reviewScheduler.ts`.
-- Preserve migration boundary in `progressStore.migrate` when changing progress schema.
-- If changing phrase text format, verify transcript highlighter and cloze generator still work.
-- If replacing content source, keep `contentService` API stable to avoid page-level rewrites.
+3. **Progress migration from local to DB**
+   - The review flow still uses localStorage-centric progress code.
+   - Add DB-backed `user_phrase_progress` and `user_pack_progress` writes/reads.
+
+4. **Phrase reuse UX**
+   - Current editor always creates a new phrase row.
+   - Add “link existing phrase” support and dedupe guards.
+
+5. **Validation + polish**
+   - Add schema-level input validation (zod or similar) for admin forms.
+   - Improve admin feedback and list linked phrases/audio in edit page.
+   - Consider adding server-side guards for admin routes (current flow is still client-led).
+
+### Environment caveat
+
+Validation was run in this environment with `npm run lint`, `npm run typecheck`, and `npm run build`.

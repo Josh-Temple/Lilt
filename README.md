@@ -1,111 +1,85 @@
 # Lilt
 
-Lilt is an **input-first English phrase learning app**.
+Lilt is an **input-first English phrase learning app** with a private authoring console.
 
-It helps learners capture high-value phrases from external audio/text content, then review those phrases in short spaced sessions until they stick.
+## Current architecture (MVP+Supabase foundation)
 
-## Product intent
+Lilt now uses a two-layer model from day one:
+- **Shared content layer**: packs, phrases, links, and audio metadata.
+- **Per-user progress layer**: phrase and pack progress separated by `user_id`.
 
-### What Lilt aims to be
-- A lightweight app to learn from packs (audio + transcript).
-- A place to save useful phrases quickly.
-- A focused review loop for retention (not endless content generation).
-- Mobile-first and local-first.
+This keeps the app light for a solo creator now while remaining ready for future multi-user release.
 
-### What Lilt is *not*
-- Not an AI chatbot.
-- Not a free conversation practice app.
-- Not a TTS generation tool.
-- Not a backend/auth-heavy platform (for this MVP).
-
-## MVP scope (implemented)
-
-Screens:
-- Home (`/`)
-- Library (`/library`)
-- Learn Pack (`/pack/[id]`)
-- Review (`/review`)
-- Phrase Detail (`/phrase/[id]`)
-- Settings (`/settings`)
-
-Core features:
-- Static seed content (`content/seed.json`) with packs + phrases.
-- Audio playback using external URLs.
-- Transcript with simple phrase highlighting.
-- Save phrase / mark confusing / want to use.
-- Review queue with simple rating-based scheduler (`easy`, `close`, `hard`).
-- Versioned local progress persistence via `localStorage`.
-- Export / import / reset progress in Settings.
-
-## Tech stack
+## Stack
 - Next.js (App Router)
 - TypeScript
 - Tailwind CSS
-- Local-first state persistence (`localStorage`)
-- Static JSON content under `/content`
-- Web app manifest for PWA-friendly setup (`public/manifest.webmanifest`)
+- Supabase Auth (magic link), Postgres (content + progress), Storage (audio bucket)
+- Local progress store still exists as fallback while DB progress integration is phased in
 
-## Getting started
+## Implemented in this iteration
+
+- Added Supabase schema migration for the minimum table set:
+  - `packs`
+  - `phrases`
+  - `pack_phrases`
+  - `audio_assets`
+  - `user_phrase_progress`
+  - `user_pack_progress`
+  - `profiles`
+- Added baseline RLS policies:
+  - admin-only writes for content tables
+  - user-owned access for progress tables
+- Added private admin routes:
+  - `/admin`
+  - `/admin/packs/new`
+  - `/admin/packs/[id]/edit`
+- Refactored Supabase access into a shared HTTP utility (`lib/supabase/http.ts`) to remove duplicated request/header logic and improve maintainability.
+- Refactored admin editor state/actions to reduce duplication and centralize async error handling.
+- Added simple admin actions:
+  - magic-link sign-in request
+  - create/update pack
+  - add phrase + pack link
+  - upload pack audio to `audio` bucket path `packs/{pack_slug}/full/v1.mp3`
+- Added API routes so learning pages can read packs from Supabase (published) with local seed fallback:
+  - `GET /api/packs`
+  - `GET /api/packs/[id]`
+
+## Environment variables
+
+Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+## Supabase setup checklist
+
+1. Create a Supabase project.
+2. Create a private storage bucket named `audio`.
+3. Run SQL migration:
+   - `supabase/migrations/20260403_001_initial_admin_learning.sql`
+4. Create your auth user (magic link).
+5. Insert a profile row and set admin flag:
+
+```sql
+insert into profiles (id, email, is_admin)
+values ('<auth_user_id>', '<your_email>', true)
+on conflict (id) do update set is_admin = excluded.is_admin;
+```
+
+## Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` and `http://localhost:3000/admin`.
 
-## Deploy on Vercel
+## Notes
 
-This project is ready to deploy as a standard **Next.js App Router** application.
-
-### 1) Import repository
-- Go to Vercel and click **Add New Project**.
-- Import this Git repository.
-- Vercel should auto-detect the framework as **Next.js**.
-
-### 2) Build settings
-- Install command: `npm install`
-- Build command: `npm run build`
-- Output directory: leave empty (default for Next.js)
-- Node.js version: **20+** (also defined in `package.json` `engines`)
-
-### 3) Environment variables
-- No required environment variables for the current MVP.
-- Data is static (`content/seed.json`) and user state is browser-local (`localStorage`).
-
-### 4) Runtime behavior notes
-- Because progress is stored in `localStorage`, saved progress is per-browser/per-device.
-- No server-side database/auth configuration is needed for deployment.
-- HTTPS on Vercel enables secure access to external audio URLs used by packs.
-
-### 5) Recommended post-deploy checks
-- Open `/`, `/library`, `/review`, `/settings`.
-- Verify that audio playback works in `/pack/[id]`.
-- Save a phrase, refresh, and verify progress is preserved in the same browser.
-- Export/import progress once from Settings.
-
-## Content structure
-
-`content/seed.json` includes:
-- `packs`: learning units with title, level, topic, transcript, audio URL, phrase references.
-- `phrases`: target phrases with meanings, patterns, variants, contrasts, examples.
-- `links`: reserved for explicit span mapping (currently inferred in code).
-
-Core domain types are defined in `lib/types.ts`:
-- `Pack`
-- `Phrase`
-- `PackPhraseLink`
-- `UserProgressV1`
-
-## Architecture notes
-
-- `lib/content.ts`: content access layer (isolates static JSON from UI).
-- `lib/reviewScheduler.ts`: review interval logic (replaceable later).
-- `lib/progressStore.ts`: persistence and migration boundary.
-
-## Future expansion ideas
-- Swap static JSON with CMS/source sync.
-- Replace scheduler with FSRS-like algorithm.
-- Add phrase-level audio segment looping when precise timings are available.
-- Optional IndexedDB storage for larger datasets.
-- Better offline support with full service worker caching.
+- Learning/review UI still supports local fallback behavior while DB-backed progress is phased in.
+- Audio URLs are stored as `storage_path` (not fixed public URL), enabling signed/private delivery later.
+- Scheduler logic remains isolated in `lib/reviewScheduler.ts`.
