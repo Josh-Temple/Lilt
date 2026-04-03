@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Icon } from "@/components/ui/Icon";
 import { contentService } from "@/lib/content";
 import { progressStore } from "@/lib/progressStore";
 import { useProgress } from "@/lib/useProgress";
@@ -21,41 +22,57 @@ export default function HomePage() {
     .filter(Boolean);
 
   return (
-    <div className="space-y-4">
-      <header className="space-y-1">
-        <p className="text-sm text-slate-500">Today</p>
-        <h1 className="text-2xl font-semibold">Keep your phrases fresh</h1>
+    <div>
+      <header className="pb-8">
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Today</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Keep your phrases fresh</h1>
       </header>
 
-      <section className="grid grid-cols-2 gap-3">
-        <Link href="/library" className="card">
-          <p className="text-xs text-slate-500">Primary</p>
-          <h2 className="mt-1 font-medium">Learn a pack</h2>
-        </Link>
-        <Link href="/review" className="card">
-          <p className="text-xs text-slate-500">Primary</p>
-          <h2 className="mt-1 font-medium">Review due phrases</h2>
-        </Link>
+      <section className="section">
+        <div className="grid grid-cols-2 gap-6">
+          <Link href="/library" className="group inline-flex items-center justify-between border-b border-slate-200 pb-2 text-sm">
+            <span>Learn</span>
+            <Icon name="library" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
+          </Link>
+          <Link href="/review" className="group inline-flex items-center justify-between border-b border-slate-200 pb-2 text-sm">
+            <span>Review</span>
+            <Icon name="review" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
+          </Link>
+        </div>
       </section>
 
-      <section className="card space-y-1">
-        <h3 className="font-medium">Summary</h3>
-        <p className="text-sm">Review due: {dueCount}</p>
-        <p className="text-sm">Saved phrases: {savedCount}</p>
-        <p className="text-sm">Total packs: {packs.length}</p>
+      <section className="section">
+        <h2 className="text-xs uppercase tracking-[0.18em] text-slate-400">Summary</h2>
+        <dl className="mt-4 space-y-2 text-sm">
+          <div className="flex justify-between border-b border-slate-100 pb-2">
+            <dt>Due</dt>
+            <dd>{dueCount}</dd>
+          </div>
+          <div className="flex justify-between border-b border-slate-100 pb-2">
+            <dt>Saved</dt>
+            <dd>{savedCount}</dd>
+          </div>
+          <div className="flex justify-between pb-2">
+            <dt>Packs</dt>
+            <dd>{packs.length}</dd>
+          </div>
+        </dl>
       </section>
 
-      <section className="card space-y-2">
-        <h3 className="font-medium">Recent packs</h3>
-        {recentPacks.length === 0 ? (
-          <p className="text-sm text-slate-600">Start any pack from Library.</p>
-        ) : (
-          recentPacks.map((pack) => (
-            <Link key={pack!.id} href={`/pack/${pack!.id}`} className="block rounded-lg bg-slate-50 p-3 text-sm">
-              {pack!.title}
-            </Link>
-          ))
-        )}
+      <section className="section">
+        <h2 className="text-xs uppercase tracking-[0.18em] text-slate-400">Recent</h2>
+        <div className="mt-3 divide-y divide-slate-100">
+          {recentPacks.length === 0 ? (
+            <p className="py-3 text-sm text-slate-500">Start any pack from Library.</p>
+          ) : (
+            recentPacks.map((pack) => (
+              <Link key={pack!.id} href={`/pack/${pack!.id}`} className="group flex items-center justify-between py-3 text-sm">
+                <span>{pack!.title}</span>
+                <Icon name="play" className="h-4 w-4 text-slate-400 transition group-hover:text-ink" />
+              </Link>
+            ))
+          )}
+        </div>
       </section>
     </div>
   );

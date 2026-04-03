@@ -7,25 +7,45 @@
 }
 
 body {
-  @apply bg-surface text-ink antialiased;
+  @apply bg-white text-ink antialiased;
 }
 
 a {
-  @apply text-accent;
+  @apply text-ink;
 }
 
-.card {
-  @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200;
+.section {
+  @apply border-t border-slate-200 py-6;
+}
+
+.section-tight {
+  @apply border-t border-slate-200 py-4;
+}
+
+.field {
+  @apply w-full border-b border-slate-300 bg-transparent px-0 py-2 text-sm outline-none transition focus:border-ink;
 }
 
 .btn {
-  @apply inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-medium;
+  @apply inline-flex items-center gap-2 border-b border-slate-400 px-0 py-1 text-sm font-medium tracking-wide text-slate-700 transition hover:border-ink hover:text-ink;
 }
 
 .btn-primary {
-  @apply btn bg-accent text-white;
+  @apply btn border-ink text-ink;
+}
+
+.card {
+  @apply border-t border-slate-200 py-4;
 }
 
 .btn-secondary {
-  @apply btn bg-slate-100 text-slate-800;
+  @apply btn;
+}
+
+.nav-link {
+  @apply inline-flex flex-1 items-center justify-center gap-1 border-b border-transparent py-3 text-xs tracking-[0.12em] text-slate-500 transition hover:text-ink;
+}
+
+.nav-link-active {
+  @apply border-ink text-ink;
 }

@@ -102,3 +102,10 @@ Open `http://localhost:3000` and `http://localhost:3000/admin`.
 - Learning/review UI still supports local fallback behavior while DB-backed progress is phased in.
 - Audio URLs are stored as `storage_path` (not fixed public URL), enabling signed/private delivery later.
 - Scheduler logic remains isolated in `lib/reviewScheduler.ts`.
+
+
+## UI design refresh (2026-04-03)
+
+- Reworked learner-facing pages from card-heavy blocks to a minimalist typography-first layout with whitespace and divider lines.
+- Introduced lightweight line icons for navigation, actions, and status toggles to reduce text-heavy controls.
+- Added a persistent icon-only bottom navigation with active state.
