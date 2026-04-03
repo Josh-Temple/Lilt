@@ -45,6 +45,21 @@ This keeps the app light for a solo creator now while remaining ready for future
   - `GET /api/packs`
   - `GET /api/packs/[id]`
 
+## Is Supabase required before uploading audio?
+
+Short answer: **No** for basic learning UI checks, **Yes** for admin/content persistence.
+
+- You can run and validate learner-facing screens with local/seed fallback even when Supabase env vars are unset.
+- You need Supabase when you want to:
+  - use `/admin` flows (magic-link auth + authoring)
+  - persist packs/phrases in DB
+  - upload/manage audio assets in Storage
+
+Recommended phased approach:
+1. UI prototyping: run without Supabase.
+2. Content authoring start: enable Supabase DB/Auth.
+3. Audio operations: configure Storage bucket and upload flow.
+
 ## Environment variables
 
 Create `.env.local`:
@@ -77,6 +92,10 @@ npm run dev
 ```
 
 Open `http://localhost:3000` and `http://localhost:3000/admin`.
+
+## Dependency security note
+
+- Next.js and `eslint-config-next` are version-ranged from `^15.2.10` to ensure Vercel installs a CVE-patched 15.x release instead of the vulnerable `15.2.5` pin.
 
 ## Notes
 

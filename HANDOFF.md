@@ -75,3 +75,33 @@ Implement the minimum Supabase-ready architecture and private admin workflow for
 ### Environment caveat
 
 Validation was run in this environment with `npm run lint`, `npm run typecheck`, and `npm run build`.
+
+## Latest hotfix session update (2026-04-03)
+
+### Goal
+Resolve Vercel production build failure caused by blocked vulnerable Next.js version detection (CVE-2025-66478).
+
+### Changes made
+
+1. Updated dependency constraints in `package.json`:
+   - `next`: `15.2.5` -> `^15.2.10`
+   - `eslint-config-next`: `15.2.5` -> `^15.2.10`
+2. Added a README security note documenting why ranges are used (to avoid vulnerable hard pinning).
+
+### Follow-up recommendation
+
+- In a network-enabled dev environment, run `npm install` and commit the refreshed `package-lock.json` to keep local/CI resolution deterministic.
+
+## Clarification update (2026-04-03)
+
+### Question addressed
+- "Do we need Supabase integration before uploading audio files?"
+
+### Answer captured
+- Not strictly required for early UI checks because learner routes keep local/seed fallback behavior.
+- Required once admin authoring/persistence begins (`/admin`, Auth, DB content).
+- Storage setup is only required when audio upload/management starts.
+
+### Docs change
+- Added a dedicated README section explaining the phased Supabase adoption path (UI only -> DB/Auth -> Storage/audio).
+
