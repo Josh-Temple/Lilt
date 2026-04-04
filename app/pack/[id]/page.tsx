@@ -81,6 +81,7 @@ export default function LearnPackPage() {
   const [studyMode, setStudyMode] = useState(true);
   const [openedPackId, setOpenedPackId] = useState<string | null>(null);
   const [focusedPhraseId, setFocusedPhraseId] = useState<string | null>(null);
+  const [audioActionLabel, setAudioActionLabel] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const replayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -135,24 +136,76 @@ export default function LearnPackPage() {
   const packState = progress.packProgress[pack.id];
   const statusLabel = packState?.completed ? "completed" : packState?.lastOpenedAt ? "in progress" : "new";
   const focusedPhrase = phraseList.find((item) => item.id === focusedPhraseId) ?? null;
+  const focusedStartSec = focusedPhrase?.packLink?.start_sec;
+  const focusedEndSec = focusedPhrase?.packLink?.end_sec;
+  const hasFocusedTiming = focusedStartSec != null;
 
-  const jumpToFocused = (replay = false) => {
-    if (!focusedPhrase?.packLink?.start_sec || !audioRef.current) return;
+  const formatSecLabel = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 
-    const startSec = Number(focusedPhrase.packLink.start_sec);
-    const endSec = Number(focusedPhrase.packLink.end_sec ?? startSec + 2.5);
-    const safeStart = Math.max(0, startSec - (replay ? 0.5 : 0));
-    const safeDuration = Math.min(8, Math.max(1.2, endSec - safeStart + (replay ? 0.5 : 0)));
+  const clearReplayTimer = () => {
+    if (replayTimeoutRef.current) {
+      clearTimeout(replayTimeoutRef.current);
+      replayTimeoutRef.current = null;
+    }
+  };
 
+  const playFocusedWindow = ({
+    leadInSec,
+    leadOutSec,
+    repeatCount = 1,
+    label,
+  }: {
+    leadInSec: number;
+    leadOutSec: number;
+    repeatCount?: number;
+    label: string;
+  }) => {
+    if (focusedStartSec == null || !audioRef.current) return;
+
+    const startSec = Number(focusedStartSec);
+    const endSec = Number(focusedEndSec ?? startSec + 2.5);
+    const safeStart = Math.max(0, startSec - leadInSec);
+    const safeEnd = Math.max(safeStart + 1.1, endSec + leadOutSec);
+    const safeDuration = Math.min(10, safeEnd - safeStart);
+    const segmentDurationMs = Math.max(1100, safeDuration * 1000);
+    const loops = Math.max(1, repeatCount);
+
+    clearReplayTimer();
+    setAudioActionLabel(label);
     audioRef.current.currentTime = safeStart;
     audioRef.current.play().catch(() => undefined);
 
-    if (replayTimeoutRef.current) clearTimeout(replayTimeoutRef.current);
-    if (replay) {
+    if (loops === 1) {
       replayTimeoutRef.current = setTimeout(() => {
         audioRef.current?.pause();
-      }, safeDuration * 1000);
+        setAudioActionLabel(null);
+      }, segmentDurationMs);
+      return;
     }
+
+    let loopIndex = 1;
+    const tick = () => {
+      if (!audioRef.current) return;
+      if (loopIndex >= loops) {
+        audioRef.current.pause();
+        setAudioActionLabel(null);
+        return;
+      }
+      loopIndex += 1;
+      audioRef.current.currentTime = safeStart;
+      audioRef.current.play().catch(() => undefined);
+      replayTimeoutRef.current = setTimeout(tick, segmentDurationMs);
+    };
+
+    replayTimeoutRef.current = setTimeout(tick, segmentDurationMs);
+  };
+
+  const jumpToFocused = () => {
+    if (focusedStartSec == null || !audioRef.current) return;
+    clearReplayTimer();
+    setAudioActionLabel("Jumped to phrase");
+    audioRef.current.currentTime = Math.max(0, Number(focusedStartSec));
+    audioRef.current.play().catch(() => undefined);
   };
 
   return (
@@ -165,7 +218,15 @@ export default function LearnPackPage() {
 
       <section className="section space-y-4">
         {pack.audioUrl ? (
-          <audio ref={audioRef} controls className="w-full" src={pack.audioUrl} onPlay={() => markPackOpened(pack.id)} />
+          <audio
+            ref={audioRef}
+            controls
+            className="w-full"
+            src={pack.audioUrl}
+            onPlay={() => markPackOpened(pack.id)}
+            onPause={() => setAudioActionLabel(null)}
+            onEnded={() => setAudioActionLabel(null)}
+          />
         ) : (
           <p className="text-sm text-slate-500">Audio unavailable for this pack.</p>
         )}
@@ -194,6 +255,12 @@ export default function LearnPackPage() {
           <p className="text-lg font-medium">{focusedPhrase.text}</p>
           <p className="text-sm text-slate-600">{focusedPhrase.meaningJa}</p>
           {focusedPhrase.notes ? <p className="text-sm text-slate-500">{focusedPhrase.notes}</p> : null}
+          {hasFocusedTiming ? (
+            <p className="text-xs text-slate-500">
+              Audio target {formatSecLabel(Number(focusedStartSec))} - {formatSecLabel(Number(focusedEndSec ?? Number(focusedStartSec) + 2.5))}
+              {audioActionLabel ? ` · ${audioActionLabel}` : ""}
+            </p>
+          ) : null}
 
           <div className="flex flex-wrap gap-4 text-slate-600">
             <button className="btn" aria-label="Save phrase" onClick={() => toggleSaved(focusedPhrase.id)}>
@@ -217,13 +284,30 @@ export default function LearnPackPage() {
             <Link href={`/phrase/${focusedPhrase.id}`} className="btn">Detail</Link>
           </div>
 
-          {focusedPhrase.packLink?.start_sec != null ? (
+          {hasFocusedTiming ? (
             <div className="flex flex-wrap gap-3">
-              <button className="btn" onClick={() => jumpToFocused(false)}>Jump to phrase</button>
-              <button className="btn" onClick={() => jumpToFocused(true)}>Replay phrase</button>
+              <button className="btn" onClick={jumpToFocused}>Jump to phrase</button>
+              <button
+                className="btn"
+                onClick={() => playFocusedWindow({ leadInSec: 0, leadOutSec: 0.2, label: "Replaying phrase" })}
+              >
+                Replay phrase
+              </button>
+              <button
+                className="btn"
+                onClick={() => playFocusedWindow({ leadInSec: 1.2, leadOutSec: 1.1, label: "Replaying with context" })}
+              >
+                Replay + context
+              </button>
+              <button
+                className="btn"
+                onClick={() => playFocusedWindow({ leadInSec: 0, leadOutSec: 0.15, repeatCount: 2, label: "Repeating focused phrase" })}
+              >
+                Repeat x2
+              </button>
             </div>
           ) : (
-            <p className="text-xs text-slate-500">No phrase timing metadata for this item yet.</p>
+            <p className="text-xs text-slate-500">No phrase timing metadata for this phrase yet. You can still study with transcript + full audio.</p>
           )}
         </section>
       ) : null}

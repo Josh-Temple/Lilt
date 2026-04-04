@@ -44,7 +44,7 @@ export default function HomePage() {
         )}
 
         <Link href="/review" className="group inline-flex w-full items-center justify-between border-b border-slate-200 pb-2 text-sm">
-          <span>Review due phrases ({dueCount})</span>
+          <span>Review due phrases from your packs ({dueCount})</span>
           <Icon name="review" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
         </Link>
       </section>

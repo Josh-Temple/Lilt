@@ -148,3 +148,49 @@ Learner-side content/progress access is now unified so Home, Review, Phrase deta
 - Added shared learner progress selector hook (`lib/useLearnerProgress.ts`) so due/recent derivations are no longer duplicated across screens.
 
 This keeps fallback behavior available without forcing UI screens to know whether data came from Supabase or local seed content.
+
+## Review context coherence update (2026-04-04)
+
+Review is now positioned as a direct continuation of pack study rather than a disconnected card list.
+
+- Review items now carry lightweight pack origin cues when available:
+  - `from {pack title}`
+  - optional topic label
+- Review prompts now rotate through a compact, pack-aligned mode set:
+  - meaning -> phrase
+  - phrase -> meaning
+  - cloze from pack/example context
+  - context line -> identify phrase
+- Context support is intentionally compact:
+  - prefers transcript excerpt derived from pack link metadata
+  - falls back to authored phrase example
+- Review reveal now includes quick continuation links:
+  - phrase detail
+  - source pack
+- Small loop-coherence copy updates:
+  - Home review entry now clarifies due items are from studied packs
+  - Phrase detail now surfaces phrase origin (pack + topic when present)
+
+Scope intentionally stays lightweight:
+- scheduler remains easy/close/hard
+- no review session manager
+- no chatbot/AI tutor behavior
+
+### Follow-up polish
+- Review mode rotation now guards cloze prompts so blanks are only shown when the phrase is actually present in the context line.
+- If phrase text is not present, review gracefully uses meaning/phrase/context prompts instead of showing a misleading cloze.
+
+## Timing-based audio repetition update (2026-04-04)
+
+Pack study now uses phrase timing metadata more directly for fast, low-friction listening repetition.
+
+- Focused phrase audio controls now support:
+  - jump to phrase timing
+  - replay phrase span
+  - replay phrase with short context window
+  - repeat focused phrase once (`x2`)
+- Focus panel now shows a compact audio target cue (`mm:ss - mm:ss`) so the learner can see what timing-backed actions apply.
+- Replay windows are bounded and lightweight (no waveform/editor complexity), keeping the page calm and mobile-friendly.
+- Audio actions reset cleanly on pause/end and timing controls are only shown when timing exists.
+- Missing timing metadata falls back to a clear, simple message while full-pack audio + transcript study remains available.
+- Phrase detail now indicates whether timing-backed replay is available from the phrase’s source pack.

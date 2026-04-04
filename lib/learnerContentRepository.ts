@@ -11,7 +11,14 @@ export type LearnerPhrase = Phrase & {
 };
 
 export type LearnerPhraseWithContext = LearnerPhrase & {
-  linkedPacks: Array<{ id: string; title: string }>;
+  linkedPacks: Array<{ id: string; title: string; topic?: string }>;
+  reviewContext?: {
+    packId: string;
+    packTitle: string;
+    packTopic?: string;
+    transcriptExcerpt?: string;
+    example?: string;
+  };
 };
 
 export type LearnerPackDetail = {
@@ -38,12 +45,36 @@ function buildFallbackPhrase(phraseId: string): LearnerPhraseWithContext | null 
   const linkedPacks = contentService
     .getPacks()
     .filter((pack) => pack.phraseIds.includes(phraseId))
-    .map((pack) => ({ id: pack.id, title: pack.title }));
+    .map((pack) => ({ id: pack.id, title: pack.title, topic: pack.topic }));
 
   return {
     ...phrase,
     linkedPacks,
   };
+}
+
+function createTranscriptExcerpt(transcript: string, phrase: LearnerPhrase): string | undefined {
+  if (!transcript.trim()) return undefined;
+
+  const start = phrase.packLink?.start_char_index;
+  const end = phrase.packLink?.end_char_index;
+  if (typeof start === "number" && typeof end === "number" && end > start) {
+    const windowStart = Math.max(0, start - 38);
+    const windowEnd = Math.min(transcript.length, end + 38);
+    const snippet = transcript.slice(windowStart, windowEnd).replace(/\s+/g, " ").trim();
+    if (snippet) return snippet;
+  }
+
+  const phraseStem = phrase.text.replace("...", "").trim().toLowerCase();
+  if (!phraseStem) return undefined;
+  const normalizedTranscript = transcript.toLowerCase();
+  const phraseIndex = normalizedTranscript.indexOf(phraseStem);
+  if (phraseIndex === -1) return undefined;
+
+  const fallbackStart = Math.max(0, phraseIndex - 38);
+  const fallbackEnd = Math.min(transcript.length, phraseIndex + phraseStem.length + 38);
+  const fallback = transcript.slice(fallbackStart, fallbackEnd).replace(/\s+/g, " ").trim();
+  return fallback || undefined;
 }
 
 function buildFallbackPackDetail(packId: string): LearnerPackDetail {
@@ -102,9 +133,19 @@ export const learnerContentRepository = {
       const detail = await this.getPackDetail(pack.id);
       const phrase = detail.phrases.find((item) => item.id === phraseId);
       if (phrase) {
+        const transcriptExcerpt = createTranscriptExcerpt(detail.pack?.transcript ?? "", phrase);
+        const linkedPackContext = linkedPacks.map((item) => ({ id: item.id, title: item.title, topic: item.topic }));
+
         return {
           ...phrase,
-          linkedPacks: linkedPacks.map((item) => ({ id: item.id, title: item.title })),
+          linkedPacks: linkedPackContext,
+          reviewContext: {
+            packId: pack.id,
+            packTitle: pack.title,
+            packTopic: pack.topic,
+            transcriptExcerpt,
+            example: phrase.examples[0],
+          },
         };
       }
     }
