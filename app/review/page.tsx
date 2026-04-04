@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { contentService } from "@/lib/content";
@@ -7,13 +8,10 @@ import { progressStore } from "@/lib/progressStore";
 import { ReviewRating } from "@/lib/types";
 import { useProgress } from "@/lib/useProgress";
 
-type Mode = "meaning-to-phrase" | "phrase-to-meaning" | "cloze" | "variation";
-
-const modes: Mode[] = ["meaning-to-phrase", "phrase-to-meaning", "cloze", "variation"];
-
 export default function ReviewPage() {
-  const { progress, update } = useProgress();
+  const { progress, reviewPhrase } = useProgress();
   const [index, setIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
 
   const queue = useMemo(() => {
     if (!progress) return [];
@@ -22,65 +20,55 @@ export default function ReviewPage() {
   }, [progress]);
 
   if (!progress) return <p>Loading...</p>;
-  if (queue.length === 0) return <div className="section">No due items. Save phrases and come back soon.</div>;
+  if (queue.length === 0) {
+    return (
+      <div className="section space-y-3">
+        <p>No due items right now.</p>
+        <Link href="/library" className="btn">Open a pack</Link>
+      </div>
+    );
+  }
 
   const phrase = queue[index % queue.length];
-  const mode = modes[index % modes.length];
-  const handleRate = (rating: ReviewRating) => {
-    update((draft) => progressStore.review(draft, phrase.id, rating));
+  const handleRate = async (rating: ReviewRating) => {
+    await reviewPhrase(phrase.id, rating);
     setIndex((v) => v + 1);
+    setRevealed(false);
   };
 
   return (
     <div>
       <header className="pb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Review</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Due {queue.length} · #{index + 1}
-        </p>
+        <p className="mt-2 text-sm text-slate-500">Due {queue.length} · Item {index + 1}</p>
       </header>
 
-      <section className="section space-y-3">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{mode}</p>
+      <section className="section space-y-4">
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Prompt</p>
+        <p className="text-lg">{phrase.meaningJa}</p>
 
-        {mode === "meaning-to-phrase" && (
-          <>
-            <p className="text-lg">{phrase.meaningJa}</p>
-            <p className="border-t border-slate-200 pt-3 text-slate-700">{phrase.text}</p>
-          </>
-        )}
-
-        {mode === "phrase-to-meaning" && (
-          <>
-            <p className="text-lg">{phrase.text}</p>
-            <p className="border-t border-slate-200 pt-3 text-slate-700">{phrase.meaningJa}</p>
-          </>
-        )}
-
-        {mode === "cloze" && (
-          <>
-            <p className="text-lg">{phrase.examples[0].replace(/[A-Za-z]{4,}/, "____")}</p>
-            <p className="border-t border-slate-200 pt-3 text-slate-700">{phrase.text}</p>
-          </>
-        )}
-
-        {mode === "variation" && (
-          <>
-            <p className="text-lg">{phrase.text}</p>
-            <p className="border-t border-slate-200 pt-3 text-slate-700">{phrase.variants[0] ?? "No variation yet"}</p>
-          </>
+        {revealed ? (
+          <div className="space-y-2 border-t border-slate-200 pt-3">
+            <p className="text-lg font-medium">{phrase.text}</p>
+            {phrase.examples[0] ? <p className="text-sm text-slate-600">{phrase.examples[0]}</p> : null}
+          </div>
+        ) : (
+          <button className="btn" onClick={() => setRevealed(true)}>Show answer</button>
         )}
       </section>
 
-      <section className="section flex items-center justify-between px-8">
+      <section className="section flex items-center justify-between px-6">
         <button className="btn" aria-label="Hard" onClick={() => handleRate("hard")}>
           <Icon name="flag" />
+          <span>Hard</span>
         </button>
         <button className="btn" aria-label="Close" onClick={() => handleRate("close")}>
           <Icon name="refresh" />
+          <span>Close</span>
         </button>
         <button className="btn-primary" aria-label="Easy" onClick={() => handleRate("easy")}>
           <Icon name="spark" />
+          <span>Easy</span>
         </button>
       </section>
     </div>

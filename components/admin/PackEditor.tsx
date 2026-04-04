@@ -105,6 +105,7 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
   const [existingPhraseQuery, setExistingPhraseQuery] = useState("");
   const [existingPhrases, setExistingPhrases] = useState<ExistingPhrase[]>([]);
   const [linkedPhrases, setLinkedPhrases] = useState<LinkedPhraseRow[]>([]);
+  const [audioAssets, setAudioAssets] = useState<AudioAsset[]>([]);
 
   const runAction = async (action: () => Promise<void>) => {
     try {
@@ -134,9 +135,21 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
     setLinkedPhrases(rows);
   }, [packId]);
 
+  const loadAudioAssets = useCallback(async () => {
+    if (!hasSupabaseEnv() || !packId) return;
+
+    const rows = await selectRows<AudioAsset[]>(
+      "audio_assets",
+      `select=id,storage_path,version,is_primary&pack_id=eq.${encodeURIComponent(packId)}&kind=eq.pack_full&order=version.desc`,
+    );
+
+    setAudioAssets(rows);
+  }, [packId]);
+
   useEffect(() => {
     loadLinkedPhrases().catch(() => undefined);
-  }, [loadLinkedPhrases]);
+    loadAudioAssets().catch(() => undefined);
+  }, [loadAudioAssets, loadLinkedPhrases]);
 
   useEffect(() => {
     if (!hasSupabaseEnv() || !existingPhraseQuery.trim()) {
@@ -275,15 +288,20 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
       });
 
       setMessage(`Pack audio uploaded (v${nextVersion})`);
+      await loadAudioAssets();
     });
   };
 
   const linkedPhraseIds = useMemo(() => new Set(linkedPhrases.map((row) => row.phrase?.id).filter(Boolean)), [linkedPhrases]);
+  const primaryAudio = audioAssets.find((asset) => asset.is_primary);
 
   return (
     <div className="space-y-4">
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Pack</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Pack</h2>
+          <span className="text-xs text-slate-500">Status: <strong>{packForm.status}</strong></span>
+        </div>
         <input className="w-full rounded-xl border p-2" placeholder="Title" value={packForm.title} onChange={(e) => updatePack("title", e.target.value)} />
         <input className="w-full rounded-xl border p-2" placeholder="Slug" value={packForm.slug} onChange={(e) => updatePack("slug", e.target.value)} />
         <textarea className="w-full rounded-xl border p-2" placeholder="Description" value={packForm.description} onChange={(e) => updatePack("description", e.target.value)} />
@@ -363,7 +381,8 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Linked phrases</h2>
+        <h2 className="text-lg font-semibold">Linked phrases ({linkedPhrases.length})</h2>
+        <p className="text-xs text-slate-500">{linkedPhrases.map((link) => link.phrase?.text).filter(Boolean).join(" · ") || "No linked phrases yet."}</p>
         <div className="space-y-3">
           {linkedPhrases.map((link) => (
             <div key={link.id} className="space-y-2 rounded-xl border border-slate-200 p-3">
@@ -391,6 +410,12 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
         <h2 className="text-lg font-semibold">Pack audio upload</h2>
         <input type="file" accept="audio/*" onChange={(e) => onUploadPackAudio(e.target.files?.[0] ?? null)} />
         <p className="text-xs text-slate-500">Stored as packs/{"{pack_slug}"}/full/vN.ext in private bucket `audio`, with newest asset marked primary.</p>
+        <p className="text-xs text-slate-600">Current primary: {primaryAudio ? `v${primaryAudio.version} (${primaryAudio.storage_path})` : "none"}</p>
+        <div className="space-y-1 text-xs text-slate-500">
+          {audioAssets.map((asset) => (
+            <p key={asset.id}>v{asset.version} {asset.is_primary ? "(primary)" : ""} — {asset.storage_path}</p>
+          ))}
+        </div>
       </section>
 
       {message ? <p className="text-sm text-slate-600">{message}</p> : null}

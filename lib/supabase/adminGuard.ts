@@ -1,36 +1,8 @@
-import { cookies } from "next/headers";
 import { getSupabaseEnv, requestSupabase } from "@/lib/supabase/http";
+import { getServerAccessToken } from "@/lib/supabase/serverAuth";
 
 type AuthUser = { id: string };
 type ProfileRow = { is_admin: boolean };
-
-function parseAccessToken(value: string) {
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (Array.isArray(parsed) && typeof parsed[0] === "string") {
-      return parsed[0];
-    }
-    if (parsed && typeof parsed === "object") {
-      const token = (parsed as { access_token?: unknown }).access_token;
-      if (typeof token === "string") {
-        return token;
-      }
-    }
-  } catch {
-    // fall through
-  }
-
-  return null;
-}
-
-async function getServerAccessToken() {
-  const jar = await cookies();
-  const authCookie = jar.getAll().find((cookie) => cookie.name.includes("-auth-token"));
-  if (!authCookie?.value) {
-    return null;
-  }
-  return parseAccessToken(authCookie.value);
-}
 
 export async function isServerAdmin() {
   if (!getSupabaseEnv().hasEnv) {

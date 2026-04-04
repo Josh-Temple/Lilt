@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { contentService } from "@/lib/content";
 import { hasSupabaseServerEnv, selectServerRows } from "@/lib/supabase/server";
+import { resolvePrimaryAudioByPackIds } from "@/lib/supabase/audioResolver";
+import { getServerAccessToken } from "@/lib/supabase/serverAuth";
 
 type DbPack = {
   id: string;
@@ -20,22 +22,6 @@ type DbLink = {
 type DbPhraseTag = {
   id: string;
   tags: string[] | null;
-};
-
-type DbAudio = {
-  pack_id: string;
-  storage_path: string;
-  duration_sec: number | null;
-};
-
-const toPublicAudioUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return "";
-  const safePath = path
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `${base}/storage/v1/object/public/audio/${safePath}`;
 };
 
 export async function GET() {
@@ -69,10 +55,8 @@ export async function GET() {
         )
       : [];
 
-    const primaryAudio = await selectServerRows<DbAudio[]>(
-      "audio_assets",
-      `select=pack_id,storage_path,duration_sec&pack_id=in.(${packIdFilter})&kind=eq.pack_full&is_primary=eq.true&order=created_at.desc`,
-    );
+    const accessToken = await getServerAccessToken();
+    const primaryAudioByPack = await resolvePrimaryAudioByPackIds(packIds, accessToken);
 
     const linksByPack = new Map<string, DbLink[]>();
     links.forEach((link) => {
@@ -82,13 +66,6 @@ export async function GET() {
     });
 
     const tagsByPhrase = new Map(phraseTags.map((phrase) => [phrase.id, phrase.tags ?? []]));
-    const primaryAudioByPack = new Map<string, DbAudio>();
-    primaryAudio.forEach((asset) => {
-      if (!primaryAudioByPack.has(asset.pack_id)) {
-        primaryAudioByPack.set(asset.pack_id, asset);
-      }
-    });
-
     const packs = rows.map((pack) => {
       const packLinks = linksByPack.get(pack.id) ?? [];
       const phraseIdsInOrder = packLinks.map((link) => link.phrase_id);
@@ -101,8 +78,8 @@ export async function GET() {
         level: (pack.level as "A2" | "B1" | "B2") ?? "B1",
         topic: pack.topic ?? "General",
         transcript: pack.transcript,
-        durationSec: primary?.duration_sec ?? pack.estimated_duration_sec ?? undefined,
-        audioUrl: primary ? toPublicAudioUrl(primary.storage_path) : "",
+        durationSec: primary?.durationSec ?? pack.estimated_duration_sec ?? undefined,
+        audioUrl: primary?.audioUrl ?? "",
         phraseIds: phraseIdsInOrder,
         tags,
       };
