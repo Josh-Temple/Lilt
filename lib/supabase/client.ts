@@ -42,15 +42,33 @@ export async function insertRows<T>(table: string, payload: Record<string, unkno
   return (await response.json()) as T;
 }
 
-export async function updateRows(table: string, query: string, payload: Record<string, unknown>) {
-  await requestSupabase({
+export async function updateRows<T = void>(table: string, query: string, payload: Record<string, unknown>, preferReturn = false) {
+  const response = await requestSupabase({
     path: `/rest/v1/${table}?${query}`,
     method: "PATCH",
     token: getClientAccessToken() ?? undefined,
     headers: {
       "Content-Type": "application/json",
+      ...(preferReturn ? { Prefer: "return=representation" } : {}),
     },
     body: JSON.stringify(payload),
+  });
+
+  if (!preferReturn) {
+    return undefined as T;
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function deleteRows(table: string, query: string) {
+  await requestSupabase({
+    path: `/rest/v1/${table}?${query}`,
+    method: "DELETE",
+    token: getClientAccessToken() ?? undefined,
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }
 

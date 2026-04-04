@@ -122,3 +122,39 @@ Shift learner-facing UI from card-based visual patterns to a refined minimal sty
 - Add tooltips for icon-only controls on desktop hover for improved discoverability.
 - Validate color contrast and tap target sizes with accessibility checks before production release.
 - Consider a design token pass (type scale, spacing scale) for stricter visual consistency as features expand.
+
+
+## Consistency hardening session update (2026-04-03)
+
+### Goal
+Align implemented behavior with the documented architecture by tightening read access, strengthening learner APIs, and making repeat authoring practical without adding broad new features.
+
+### What was fixed
+1. **RLS content read tightening**
+   - Updated migration policies so learner reads are scoped to published content only (packs, phrases, pack_phrases, audio_assets), while admins keep full read/write on content tables.
+   - Preserved user-owned progress table policies and admin-only content writes.
+
+2. **Learner API parity with DB-authored content**
+   - `GET /api/packs` now derives `phraseIds` (sorted), `tags`, primary pack audio URL, and duration from DB rows where available.
+   - `GET /api/packs/[id]` now enforces published read, keeps phrase order from `pack_phrases.sort_order`, preserves authored phrase arrays, and returns link metadata (`sort_order`, `role`, indices, timing).
+   - Seed fallback remains when Supabase env/config is unavailable or a request fails.
+
+3. **PackEditor authoring flow improvements**
+   - Added existing phrase search/link flow (slug/text search) to avoid new-row-only authoring.
+   - Added linked phrase visibility with editable link metadata (`sort_order`, `role`, char/sec ranges).
+   - Added unlink action that removes only `pack_phrases` rows (not phrase records).
+
+4. **Audio versioning for repeated uploads**
+   - Replaced fixed `v1.mp3` behavior with version increments (`vN.ext`).
+   - New uploads are marked primary; previous primary assets are unset but retained for history.
+
+5. **Route guard cleanup**
+   - Added a light server-side admin guard helper and applied it to `/admin/packs/new` and `/admin/packs/[id]/edit` routes (redirect to `/admin` when not admin).
+
+### What remains intentionally postponed
+- Full signed-URL delivery flow for private Storage bucket playback (currently API resolves primary storage path as public-object URL shape).
+- Rich phrase clip workflow (`kind = phrase_clip`) and advanced content QA tools.
+- Multi-admin governance / invitation management.
+
+### Next logical step
+Implement a dedicated server endpoint for signed pack audio URLs (using service role only on server), then switch learner pack APIs to return those signed URLs so private bucket playback is production-safe end-to-end.
