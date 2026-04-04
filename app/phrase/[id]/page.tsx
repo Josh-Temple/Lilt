@@ -85,6 +85,17 @@ export default function PhraseDetailPage() {
       </section>
 
       <section className="section space-y-2 text-sm">
+        {phrase.linkedPacks[0] ? (
+          <p className="text-xs text-slate-500">
+            Origin: {phrase.linkedPacks[0].title}
+            {phrase.linkedPacks[0].topic ? ` · ${phrase.linkedPacks[0].topic}` : ""}
+          </p>
+        ) : null}
+        <p className="text-xs text-slate-500">
+          {phrase.packLink?.start_sec != null
+            ? "Timing replay is available from this phrase's pack."
+            : "Timing replay is not available for this phrase yet."}
+        </p>
         <Link href="/review" className="btn inline-flex">Continue review ({dueCount})</Link>
         {phrase.linkedPacks[0] ? <Link href={`/pack/${phrase.linkedPacks[0].id}`} className="btn inline-flex">Back to pack: {phrase.linkedPacks[0].title}</Link> : null}
       </section>

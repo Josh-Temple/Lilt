@@ -1,5 +1,136 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, review context reliability polish)
+
+### Goal
+Keep review pack-connected while preventing low-quality prompts when context lines do not actually contain the target phrase.
+
+### What changed
+1. **Cloze safety guard added in review**
+   - `app/review/page.tsx` now checks whether the context line contains the phrase text before enabling cloze mode.
+   - If phrase text is absent, review falls back to a compact set (meaning/phrase/context) instead of generating misleading blanks.
+
+2. **Review header cue tightened**
+   - Added a compact “from studied packs” cue in the review header to reinforce product identity.
+
+3. **README updated**
+   - Added a short follow-up note documenting cloze-mode guarding behavior.
+
+### Outcome
+- Review prompts stay compact and pack-connected.
+- Cloze prompts are now more trustworthy and less noisy.
+- The review loop remains fast and unchanged in scheduling (`easy/close/hard`).
+
+### Intentionally kept simple
+- No scheduler redesign.
+- No extra review modes.
+- No new navigation/system complexity.
+
+### Next best step
+Use phrase timing metadata from source packs to add an optional “rehear in pack” shortcut directly from review reveal (only when timing exists), without slowing default review flow.
+
+## Latest session update (2026-04-04, timing-based audio repetition in pack study)
+
+### Goal
+Deepen phrase timing metadata usage so pack study supports fast phrase rehearing (phrase span + short context) without turning into a complex audio tool.
+
+### What changed
+1. **Focused phrase audio actions expanded (pack page)**
+   - Reworked focused phrase playback controls in `app/pack/[id]/page.tsx`.
+   - Added compact actions when timing exists:
+     - Jump to phrase
+     - Replay phrase
+     - Replay + context
+     - Repeat x2
+   - Kept controls inside the focused phrase section (no heavy global control panel).
+
+2. **Timing-backed playback behavior tightened**
+   - Added bounded timed playback windows and a repeat-loop helper for lightweight repetition.
+   - Added cleanup/reset behavior for replay timers and audio action state on pause/end/unmount.
+   - Fixed timing guard logic to correctly allow phrases that start at `0s` (uses null checks instead of truthy checks).
+
+3. **Subtle audio state awareness**
+   - Focus panel now shows compact timing target (`mm:ss - mm:ss`) plus current audio action label.
+   - Keeps state visible but low-noise.
+
+4. **Graceful no-timing fallback**
+   - Timing controls are only shown when timing metadata is available for the focused phrase.
+   - When missing, a clear fallback message is shown and normal transcript/full-audio study remains available.
+
+5. **Small adjacent support change**
+   - Phrase detail now shows whether timing replay is available for that phrase from its source pack.
+
+6. **README updated**
+   - Added a timing-based audio repetition section documenting the new pack-study listening loop.
+
+### Outcome
+- Phrase timing metadata now creates practical in-pack listening value.
+- Rehearing target phrases (with/without short context) is faster and clearer.
+- Pack page remains compact and study-centered.
+
+### Intentionally kept simple
+- No waveform or transcript timing editor.
+- No advanced playback customization matrix.
+- No admin timing workflow expansion.
+- No new review/scheduler complexity.
+
+### Next best step
+Polish pack completion/review transition around audio repetition:
+1. Add an ultra-light “review this reheard phrase next” nudge after focused repeats.
+2. Tune default context window durations from real learner feedback.
+3. Consider minimal authoring-side timing quality indicators (not full editing UI).
+
+## Latest session update (2026-04-04, review as pack-continuation)
+
+### Goal
+Make review feel like a direct continuation of pack-based input learning (short pack -> noticing -> light review) without broadening product scope.
+
+### What changed
+1. **Review items now include pack-derived context**
+   - Extended learner phrase context with:
+     - linked pack topic metadata
+     - compact `reviewContext` object (source pack + transcript/example clue)
+   - Repository now derives transcript excerpts from pack transcript + phrase link char ranges when available, with phrase-text search fallback.
+
+2. **Review modes expanded in a controlled, compact way**
+   - Preserved current rating flow (`easy` / `close` / `hard`) and scheduler behavior.
+   - Added lightweight mode rotation:
+     - meaning -> phrase
+     - phrase -> meaning
+     - cloze from pack/example line
+     - context line -> identify phrase
+   - Modes degrade gracefully to the 2 basic modes when context is unavailable.
+
+3. **Review now links back to learning source**
+   - Revealed answer view now provides direct actions to:
+     - phrase detail
+     - source pack
+   - Added compact source label in review prompt header (`from {pack}` + optional topic).
+
+4. **Small coherence hooks outside review**
+   - Home review CTA now explicitly says due phrases come from studied packs.
+   - Phrase detail now surfaces phrase origin (pack + optional topic) above continuation links.
+
+5. **README updated**
+   - Added “Review context coherence update (2026-04-04)” describing the new review philosophy and scoped constraints.
+
+### Outcome
+- Review feels tied to real pack encounters instead of isolated flashcards.
+- Context is present but compact enough to keep mobile review speed.
+- Product identity stays narrow and consistent with Lilt’s input-first loop.
+
+### Intentionally kept simple
+- No scheduler redesign.
+- No complex review session orchestration.
+- No admin/content authoring expansion.
+- No AI tutor/chat behaviors.
+
+### Next best step
+Polish phrase timing usage across review-to-pack revisit loops:
+1. Add lightweight “listen to this phrase again” jumps from review reveal when timing exists.
+2. Improve replay window defaults (tight phrase-only vs tiny context window presets).
+3. Keep fallback behavior clean when timing metadata is missing.
+
 ## Latest session update (2026-04-04, learner-side content/progress unification)
 
 ### Goal
