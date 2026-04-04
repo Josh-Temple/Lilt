@@ -86,15 +86,14 @@ export default function LearnPackPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const replayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  if (!pack && !loading) return notFound();
-  if (!progress || !pack) return <p>Loading...</p>;
-
   useEffect(() => {
-    if (pack.id && openedPackId !== pack.id) {
-      markPackOpened(pack.id).catch(() => undefined);
-      setOpenedPackId(pack.id);
+    const packId = pack?.id;
+    if (!packId) return;
+    if (openedPackId !== packId) {
+      markPackOpened(packId).catch(() => undefined);
+      setOpenedPackId(packId);
     }
-  }, [markPackOpened, openedPackId, pack.id]);
+  }, [markPackOpened, openedPackId, pack?.id]);
 
   useEffect(() => {
     if (!focusedPhraseId && phrases.length > 0) {
@@ -109,6 +108,9 @@ export default function LearnPackPage() {
       }
     };
   }, []);
+
+  if (!pack && !loading) return notFound();
+  if (!progress || !pack) return <p>Loading...</p>;
 
   const dueCount = progressStore.getDuePhraseIds(progress).length;
   const packState = progress.packProgress[pack.id];

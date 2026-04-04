@@ -1,5 +1,21 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, Vercel build fix)
+
+### Goal
+Resolve production build failure caused by React Hooks ordering in the pack learner page.
+
+### What changed
+1. **Hook ordering fix in pack page**
+   - Moved early returns (`notFound` / loading fallback) to run **after** all Hook declarations.
+   - This ensures Hooks are always called in a stable order and satisfies `react-hooks/rules-of-hooks`.
+
+2. **Safe pack id handling**
+   - Updated the pack-open side effect to guard on `pack?.id` and use a local `packId` to avoid undefined access before data load.
+
+### Outcome
+- `npm run build` now passes lint/type checks where the previous Vercel log failed on conditional hook usage.
+
 ## Latest session update (2026-04-04, pack noticing pass)
 
 ### Goal
