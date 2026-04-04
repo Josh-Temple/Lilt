@@ -1,5 +1,38 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, Vercel warning/error follow-up)
+
+### Goal
+Address the latest Vercel production build issues:
+- TypeScript failure in `app/settings/page.tsx` (`useProgress().update` missing)
+- React Hooks exhaustive-deps warning in `app/pack/[id]/page.tsx`
+- Next.js config warning about `experimental.typedRoutes`
+
+### What changed
+1. **Restored settings dependency contract**
+   - Added `update` back to `useProgress`.
+   - `update` applies a caller-provided mutator to progress and persists via `progressStore.save`.
+   - This unblocks Settings import/reset actions that call `update(() => next)`.
+
+2. **Resolved transcript `useMemo` dependency warning**
+   - Updated dependency array in pack page transcript `useMemo` to include `pack` and `progress` directly.
+   - This removes the `react-hooks/exhaustive-deps` warning reported in the build log.
+
+3. **Updated Next.js typedRoutes config location**
+   - Moved from:
+     - `experimental: { typedRoutes: true }`
+   - To:
+     - `typedRoutes: true`
+   - Aligns with Next.js 15.5 warning guidance.
+
+4. **README updated**
+   - Added a new section documenting this warning/error follow-up and what was changed.
+
+### Outcome
+- The reported Settings type error is fixed.
+- The reported `useMemo` exhaustive-deps warning is fixed.
+- Next.js typedRoutes deprecation warning is fixed.
+
 ## Latest session update (2026-04-04, follow-up hooks lint fix)
 
 ### Goal

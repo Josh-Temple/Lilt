@@ -62,9 +62,17 @@ export function useProgress() {
     await syncReview(next, phraseId, rating);
   }, [apply]);
 
+  const update = useCallback((mutator: (draft: UserProgressV1) => UserProgressV1) => {
+    const next = apply(mutator);
+    if (!next) return null;
+    progressStore.save(next);
+    return next;
+  }, [apply]);
+
   return {
     progress,
     source,
+    update,
     markPackOpened,
     markPackCompleted,
     toggleSaved,

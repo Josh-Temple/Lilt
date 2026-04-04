@@ -128,7 +128,7 @@ export default function LearnPackPage() {
       phraseState,
       onFocus: (phraseId) => setFocusedPhraseId(phraseId),
     });
-  }, [focusedPhraseId, pack?.transcript, phraseList, progress?.phraseProgress]);
+  }, [focusedPhraseId, pack, phraseList, progress]);
 
   if (!pack && !loading) return notFound();
   if (!progress || !pack) return <p>Loading...</p>;

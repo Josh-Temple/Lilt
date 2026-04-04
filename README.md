@@ -126,3 +126,9 @@ A focused iteration improved in-context phrase noticing inside pack study:
   - `/api/packs/[id]`
 - Local seed-content fallback for these APIs has been removed.
 - If Supabase env is missing or the Supabase request fails, these APIs now return explicit `500` errors.
+
+## Build warning/error follow-up (2026-04-04)
+
+- Fixed Settings page build type error by restoring `update` in `useProgress` so import/reset flows compile again.
+- Fixed pack page Hook lint warning by widening transcript `useMemo` dependencies to include full `pack` and `progress` objects.
+- Updated `next.config.ts` to use top-level `typedRoutes: true` (instead of `experimental.typedRoutes`) to match Next.js 15.5 warning guidance.
