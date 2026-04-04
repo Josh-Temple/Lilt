@@ -19,6 +19,10 @@ const initPhraseProgress = (phraseId: string): PhraseProgress => ({
   saved: false,
   dueAt: new Date().toISOString(),
   stability: 1,
+  reviewState: "new",
+  easyCount: 0,
+  closeCount: 0,
+  hardCount: 0,
   favorite: false,
   confusing: false,
   wantToUse: false,
@@ -77,7 +81,7 @@ export const progressStore = {
   toggleSaved(progress: UserProgressV1, phraseId: string) {
     const base = progress.phraseProgress[phraseId] ?? initPhraseProgress(phraseId);
     const nextSaved = !base.saved;
-    progress.phraseProgress[phraseId] = { ...base, saved: nextSaved };
+    progress.phraseProgress[phraseId] = { ...base, saved: nextSaved, reviewState: nextSaved ? "learning" : "new" };
 
     if (nextSaved && !progress.savedPhraseIds.includes(phraseId)) {
       progress.savedPhraseIds.push(phraseId);
@@ -104,7 +108,15 @@ export const progressStore = {
       rating,
     );
 
-    progress.phraseProgress[phraseId] = { ...base, ...next, saved: true };
+    progress.phraseProgress[phraseId] = {
+      ...base,
+      ...next,
+      saved: true,
+      reviewState: "review",
+      easyCount: (base.easyCount ?? 0) + (rating === "easy" ? 1 : 0),
+      closeCount: (base.closeCount ?? 0) + (rating === "close" ? 1 : 0),
+      hardCount: (base.hardCount ?? 0) + (rating === "hard" ? 1 : 0),
+    };
     if (!progress.savedPhraseIds.includes(phraseId)) {
       progress.savedPhraseIds.push(phraseId);
     }

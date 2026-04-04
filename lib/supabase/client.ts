@@ -1,5 +1,10 @@
 import { getClientAccessToken, getSupabaseEnv, requestSupabase } from "@/lib/supabase/http";
 
+type WriteOptions = {
+  query?: string;
+  upsert?: boolean;
+};
+
 export function hasSupabaseEnv() {
   return getSupabaseEnv().hasEnv;
 }
@@ -15,6 +20,26 @@ export async function requestMagicLink(email: string) {
   });
 }
 
+export async function getAuthenticatedUser() {
+  const token = getClientAccessToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await requestSupabase({
+      path: "/auth/v1/user",
+      token,
+      cache: "no-store",
+    });
+    const user = (await response.json()) as { id?: string };
+    if (!user?.id) return null;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 export async function selectRows<T>(table: string, query: string) {
   const response = await requestSupabase({
     path: `/rest/v1/${table}?${query}`,
@@ -27,14 +52,24 @@ export async function selectRows<T>(table: string, query: string) {
   return (await response.json()) as T;
 }
 
-export async function insertRows<T>(table: string, payload: Record<string, unknown> | Record<string, unknown>[]) {
+export async function insertRows<T>(
+  table: string,
+  payload: Record<string, unknown> | Record<string, unknown>[],
+  options?: WriteOptions,
+) {
+  const suffix = options?.query ? `?${options.query}` : "";
+  const prefer = ["return=representation"];
+  if (options?.upsert) {
+    prefer.push("resolution=merge-duplicates");
+  }
+
   const response = await requestSupabase({
-    path: `/rest/v1/${table}`,
+    path: `/rest/v1/${table}${suffix}`,
     method: "POST",
     token: getClientAccessToken() ?? undefined,
     headers: {
       "Content-Type": "application/json",
-      Prefer: "return=representation",
+      Prefer: prefer.join(","),
     },
     body: JSON.stringify(payload),
   });

@@ -53,6 +53,10 @@ export type PhraseProgress = {
   dueAt: string;
   lastReviewedAt?: string;
   stability: number;
+  reviewState?: "new" | "learning" | "review" | "mastered";
+  easyCount: number;
+  closeCount: number;
+  hardCount: number;
   favorite: boolean;
   confusing: boolean;
   wantToUse: boolean;

@@ -2,77 +2,77 @@
 
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
-import { contentService } from "@/lib/content";
 import { progressStore } from "@/lib/progressStore";
+import { usePacks } from "@/lib/usePacks";
 import { useProgress } from "@/lib/useProgress";
 
 export default function HomePage() {
-  const { progress } = useProgress();
-  const packs = contentService.getPacks();
+  const { progress, source } = useProgress();
+  const packs = usePacks();
 
   if (!progress) return <p>Loading...</p>;
 
   const dueCount = progressStore.getDuePhraseIds(progress).length;
-  const savedCount = progress.savedPhraseIds.length;
-  const recentPacks = Object.values(progress.packProgress)
+  const recent = Object.values(progress.packProgress)
     .filter((pack) => pack.lastOpenedAt)
-    .sort((a, b) => (a.lastOpenedAt! < b.lastOpenedAt! ? 1 : -1))
-    .slice(0, 3)
+    .sort((a, b) => (a.lastOpenedAt! < b.lastOpenedAt! ? 1 : -1));
+
+  const currentPack = recent
+    .map((item) => packs.find((pack) => pack.id === item.packId))
+    .find(Boolean);
+
+  const secondaryPacks = recent
+    .slice(1, 3)
     .map((item) => packs.find((pack) => pack.id === item.packId))
     .filter(Boolean);
+
+  const hasInProgress = Boolean(currentPack);
 
   return (
     <div>
       <header className="pb-8">
         <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Today</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Keep your phrases fresh</h1>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Your next learning step</h1>
+        <p className="mt-2 text-xs text-slate-500">{source === "server" ? "Synced with Supabase" : "Local fallback mode"}</p>
       </header>
 
-      <section className="section">
-        <div className="grid grid-cols-2 gap-6">
-          <Link href="/library" className="group inline-flex items-center justify-between border-b border-slate-200 pb-2 text-sm">
-            <span>Learn</span>
+      <section className="section space-y-4">
+        {hasInProgress ? (
+          <Link href={`/pack/${currentPack!.id}`} className="group inline-flex w-full items-center justify-between border-b border-slate-200 pb-2 text-sm">
+            <span>Continue pack: {currentPack!.title}</span>
+            <Icon name="play" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
+          </Link>
+        ) : (
+          <Link href="/library" className="group inline-flex w-full items-center justify-between border-b border-slate-200 pb-2 text-sm">
+            <span>Start a published pack</span>
             <Icon name="library" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
           </Link>
-          <Link href="/review" className="group inline-flex items-center justify-between border-b border-slate-200 pb-2 text-sm">
-            <span>Review</span>
-            <Icon name="review" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
-          </Link>
+        )}
+
+        <Link href="/review" className="group inline-flex w-full items-center justify-between border-b border-slate-200 pb-2 text-sm">
+          <span>Review due phrases ({dueCount})</span>
+          <Icon name="review" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
+        </Link>
+      </section>
+
+      <section className="section">
+        <h2 className="text-xs uppercase tracking-[0.18em] text-slate-400">Light context</h2>
+        <div className="mt-3 space-y-2 text-sm">
+          <p className="border-b border-slate-100 pb-2">Due now: {dueCount}</p>
+          <p className="border-b border-slate-100 pb-2">Saved phrases: {progress.savedPhraseIds.length}</p>
+          {!hasInProgress ? <p className="text-slate-500">No recent pack yet. Pick one from Library to start your loop.</p> : null}
         </div>
-      </section>
 
-      <section className="section">
-        <h2 className="text-xs uppercase tracking-[0.18em] text-slate-400">Summary</h2>
-        <dl className="mt-4 space-y-2 text-sm">
-          <div className="flex justify-between border-b border-slate-100 pb-2">
-            <dt>Due</dt>
-            <dd>{dueCount}</dd>
-          </div>
-          <div className="flex justify-between border-b border-slate-100 pb-2">
-            <dt>Saved</dt>
-            <dd>{savedCount}</dd>
-          </div>
-          <div className="flex justify-between pb-2">
-            <dt>Packs</dt>
-            <dd>{packs.length}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className="section">
-        <h2 className="text-xs uppercase tracking-[0.18em] text-slate-400">Recent</h2>
-        <div className="mt-3 divide-y divide-slate-100">
-          {recentPacks.length === 0 ? (
-            <p className="py-3 text-sm text-slate-500">Start any pack from Library.</p>
-          ) : (
-            recentPacks.map((pack) => (
-              <Link key={pack!.id} href={`/pack/${pack!.id}`} className="group flex items-center justify-between py-3 text-sm">
+        {secondaryPacks.length > 0 ? (
+          <div className="mt-4 divide-y divide-slate-100">
+            {secondaryPacks.map((pack) => (
+              <Link key={pack!.id} href={`/pack/${pack!.id}`} className="flex items-center justify-between py-2 text-sm">
                 <span>{pack!.title}</span>
-                <Icon name="play" className="h-4 w-4 text-slate-400 transition group-hover:text-ink" />
+                <Icon name="play" className="h-4 w-4 text-slate-400" />
               </Link>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );

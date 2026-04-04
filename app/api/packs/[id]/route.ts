@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { contentService } from "@/lib/content";
 import { hasSupabaseServerEnv, selectServerRows } from "@/lib/supabase/server";
+import { resolvePrimaryAudioByPackIds } from "@/lib/supabase/audioResolver";
+import { getServerAccessToken } from "@/lib/supabase/serverAuth";
 
 type DbPack = {
   id: string;
@@ -34,21 +36,6 @@ type DbLink = {
   end_char_index: number | null;
   start_sec: number | null;
   end_sec: number | null;
-};
-
-type DbAudio = {
-  storage_path: string;
-  duration_sec: number | null;
-};
-
-const toPublicAudioUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return "";
-  const safePath = path
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `${base}/storage/v1/object/public/audio/${safePath}`;
 };
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -87,11 +74,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
     const phraseById = new Map(phrases.map((phrase) => [phrase.id, phrase]));
 
-    const primaryAudioRows = await selectServerRows<DbAudio[]>(
-      "audio_assets",
-      `select=storage_path,duration_sec&pack_id=eq.${encodeURIComponent(id)}&kind=eq.pack_full&is_primary=eq.true&order=created_at.desc&limit=1`,
-    );
-    const primaryAudio = primaryAudioRows[0];
+    const accessToken = await getServerAccessToken();
+    const primaryAudioByPack = await resolvePrimaryAudioByPackIds([id], accessToken);
+    const primaryAudio = primaryAudioByPack.get(id);
 
     const orderedPhrases = links
       .map((link) => {
@@ -130,8 +115,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
         level: (pack.level as "A2" | "B1" | "B2") ?? "B1",
         topic: pack.topic ?? "General",
         transcript: pack.transcript,
-        durationSec: primaryAudio?.duration_sec ?? pack.estimated_duration_sec ?? undefined,
-        audioUrl: primaryAudio ? toPublicAudioUrl(primaryAudio.storage_path) : "",
+        durationSec: primaryAudio?.durationSec ?? pack.estimated_duration_sec ?? undefined,
+        audioUrl: primaryAudio?.audioUrl ?? "",
         phraseIds,
         tags: Array.from(new Set(orderedPhrases.flatMap((phrase) => phrase.tags))),
       },
