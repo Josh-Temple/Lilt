@@ -1,5 +1,56 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, learner-side content/progress unification)
+
+### Goal
+Make learner data flow internally consistent so Home / Pack / Phrase detail / Review all use one content path and one progress model boundary.
+
+### What changed
+1. **Unified learner content repository added**
+   - Added `lib/learnerContentRepository.ts` as the single learner-facing content source.
+   - Repository behavior:
+     - prefers learner APIs (`/api/packs`, `/api/packs/[id]`)
+     - falls back to local seed-based `contentService` behind the same interface
+   - Added phrase-level loaders that resolve authored phrase fields and linked pack context through pack detail data.
+
+2. **Learner content hooks moved onto the repository**
+   - Refactored `lib/usePacks.ts` to use the repository for:
+     - published packs (`usePacks`)
+     - pack detail (`usePackDetail`)
+     - phrase detail (`usePhraseDetail`)
+     - review phrase hydration (`usePhrasesByIds`)
+
+3. **Learner progress access unified for UI derivations**
+   - Added `lib/useLearnerProgress.ts` to centralize derived learner progress state:
+     - due phrase ids/count
+     - recent pack ordering
+   - Screens now consume this instead of deriving due/recent directly via ad hoc `progressStore` calls.
+
+4. **Learner screens migrated to coherent data flow**
+   - `app/page.tsx` (Home): now uses unified learner progress selectors and repository-backed pack list.
+   - `app/review/page.tsx` (Review): due queue now resolves phrase content through the unified learner content path.
+   - `app/phrase/[id]/page.tsx` (Phrase detail): now loads phrase + linked packs via unified learner content path.
+   - `app/pack/[id]/page.tsx` (Pack study): now consumes unified learner progress selectors for due count.
+
+5. **README updated**
+   - Added architecture note documenting learner-side data-flow unification and fallback behavior behind the repository boundary.
+
+### Outcome
+- Learner app no longer feels split between DB-backed pack study and local-only review/detail/home readers.
+- Supabase-first behavior is preserved while keeping local fallback hidden behind one learner content abstraction.
+- Progress derivations used by learner screens now come from one shared progress-access layer.
+
+### Intentionally deferred
+- Re-introducing richer pack-context rendering inside Review cards (e.g., subtitle snippets / transcript anchors).
+- Scheduler redesign beyond current easy/close/hard model.
+- Additional learner APIs dedicated to phrase lookup (current repository resolves phrase content via existing pack APIs).
+
+### Next best task
+1. Add lightweight **pack context in review** (pack title + tiny transcript anchor where available) while keeping current review speed model.
+2. Improve **phrase timing quality usage** for more reliable phrase-level replay windows and tighter repetition loops.
+
+---
+
 ## Latest session update (2026-04-04, Vercel warning/error follow-up)
 
 ### Goal

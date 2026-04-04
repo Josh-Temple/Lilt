@@ -4,12 +4,11 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { progressStore } from "@/lib/progressStore";
-import { useProgress } from "@/lib/useProgress";
+import { LearnerPhrase } from "@/lib/learnerContentRepository";
+import { useLearnerProgress } from "@/lib/useLearnerProgress";
 import { usePackDetail } from "@/lib/usePacks";
-import { Phrase } from "@/lib/types";
 
-type PhraseWithLink = Phrase & {
+type PhraseWithLink = LearnerPhrase & {
   packLink?: {
     start_char_index?: number | null;
     end_char_index?: number | null;
@@ -76,7 +75,7 @@ function renderTranscript(transcript: string, phrases: PhraseWithLink[], context
 export default function LearnPackPage() {
   const params = useParams<{ id: string }>();
   const { pack, phrases, loading } = usePackDetail(params.id);
-  const { progress, markPackOpened, markPackCompleted, toggleSaved, toggleFlag } = useProgress();
+  const { progress, dueCount, markPackOpened, markPackCompleted, toggleSaved, toggleFlag } = useLearnerProgress();
 
   const [showTranscript, setShowTranscript] = useState(true);
   const [studyMode, setStudyMode] = useState(true);
@@ -133,7 +132,6 @@ export default function LearnPackPage() {
   if (!pack && !loading) return notFound();
   if (!progress || !pack) return <p>Loading...</p>;
 
-  const dueCount = progressStore.getDuePhraseIds(progress).length;
   const packState = progress.packProgress[pack.id];
   const statusLabel = packState?.completed ? "completed" : packState?.lastOpenedAt ? "in progress" : "new";
   const focusedPhrase = phraseList.find((item) => item.id === focusedPhraseId) ?? null;

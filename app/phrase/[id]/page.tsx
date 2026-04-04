@@ -3,18 +3,17 @@
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
-import { contentService } from "@/lib/content";
-import { useProgress } from "@/lib/useProgress";
+import { useLearnerProgress } from "@/lib/useLearnerProgress";
+import { usePhraseDetail } from "@/lib/usePacks";
 
 export default function PhraseDetailPage() {
   const params = useParams<{ id: string }>();
-  const phrase = contentService.getPhrase(params.id);
-  const { progress, toggleSaved, toggleFlag } = useProgress();
+  const { phrase, loading } = usePhraseDetail(params.id);
+  const { progress, toggleSaved, toggleFlag, dueCount } = useLearnerProgress();
 
-  if (!phrase) return notFound();
-  if (!progress) return <p>Loading...</p>;
+  if (!phrase && !loading) return notFound();
+  if (!progress || !phrase) return <p>Loading...</p>;
 
-  const packs = contentService.getPacks().filter((pack) => pack.phraseIds.includes(phrase.id));
   const state = progress.phraseProgress[phrase.id];
   const dueLabel = state?.dueAt ? new Date(state.dueAt).toLocaleString() : "Not scheduled";
 
@@ -86,8 +85,8 @@ export default function PhraseDetailPage() {
       </section>
 
       <section className="section space-y-2 text-sm">
-        <Link href="/review" className="btn inline-flex">Continue review</Link>
-        {packs[0] ? <Link href={`/pack/${packs[0].id}`} className="btn inline-flex">Back to pack: {packs[0].title}</Link> : null}
+        <Link href="/review" className="btn inline-flex">Continue review ({dueCount})</Link>
+        {phrase.linkedPacks[0] ? <Link href={`/pack/${phrase.linkedPacks[0].id}`} className="btn inline-flex">Back to pack: {phrase.linkedPacks[0].title}</Link> : null}
       </section>
     </div>
   );

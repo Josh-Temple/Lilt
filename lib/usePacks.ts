@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pack, Phrase } from "@/lib/types";
+import { learnerContentRepository, LearnerPhraseWithContext } from "@/lib/learnerContentRepository";
+import { Pack } from "@/lib/types";
 
 export function usePacks() {
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -9,21 +10,10 @@ export function usePacks() {
   useEffect(() => {
     let active = true;
 
-    fetch("/api/packs")
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(await res.text());
-        }
-        return res.json();
-      })
-      .then((json) => {
-        if (!active || !Array.isArray(json.packs)) return;
-        setPacks(json.packs as Pack[]);
-      })
-      .catch(() => {
-        if (!active) return;
-        setPacks([]);
-      });
+    learnerContentRepository.getPublishedPacks().then((next) => {
+      if (!active) return;
+      setPacks(next);
+    });
 
     return () => {
       active = false;
@@ -35,38 +25,23 @@ export function usePacks() {
 
 export function usePackDetail(id: string) {
   const [pack, setPack] = useState<Pack | null>(null);
-  const [phrases, setPhrases] = useState<Phrase[]>([]);
+  const [phrases, setPhrases] = useState<LearnerPhraseWithContext[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-
     setLoading(true);
-    fetch(`/api/packs/${id}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(await res.text());
-        }
-        return res.json();
-      })
-      .then((json) => {
+
+    learnerContentRepository
+      .getPackDetail(id)
+      .then((detail) => {
         if (!active) return;
-        if (json.pack) {
-          setPack(json.pack as Pack);
-        }
-        if (Array.isArray(json.phrases)) {
-          setPhrases(json.phrases as Phrase[]);
-        }
-      })
-      .catch(() => {
-        if (!active) return;
-        setPack(null);
-        setPhrases([]);
+        setPack(detail.pack);
+        setPhrases(detail.phrases.map((item) => ({ ...item, linkedPacks: [] })));
       })
       .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
+        if (!active) return;
+        setLoading(false);
       });
 
     return () => {
@@ -75,4 +50,59 @@ export function usePackDetail(id: string) {
   }, [id]);
 
   return { pack, phrases, loading };
+}
+
+export function usePhraseDetail(id: string) {
+  const [phrase, setPhrase] = useState<LearnerPhraseWithContext | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    learnerContentRepository
+      .getPhraseDetail(id)
+      .then((item) => {
+        if (!active) return;
+        setPhrase(item);
+      })
+      .finally(() => {
+        if (!active) return;
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  return { phrase, loading };
+}
+
+export function usePhrasesByIds(ids: string[]) {
+  const [phrases, setPhrases] = useState<LearnerPhraseWithContext[]>([]);
+  const [loading, setLoading] = useState(true);
+  const idsKey = ids.join("|");
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    learnerContentRepository
+      .getPhrasesByIds(ids)
+      .then((items) => {
+        if (!active) return;
+        setPhrases(items);
+      })
+      .finally(() => {
+        if (!active) return;
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [idsKey]);
+
+  return { phrases, loading };
 }

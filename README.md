@@ -132,3 +132,19 @@ A focused iteration improved in-context phrase noticing inside pack study:
 - Fixed Settings page build type error by restoring `update` in `useProgress` so import/reset flows compile again.
 - Fixed pack page Hook lint warning by widening transcript `useMemo` dependencies to include full `pack` and `progress` objects.
 - Updated `next.config.ts` to use top-level `typedRoutes: true` (instead of `experimental.typedRoutes`) to match Next.js 15.5 warning guidance.
+
+## Learner data-flow unification update (2026-04-04)
+
+Learner-side content/progress access is now unified so Home, Review, Phrase detail, and Pack study share one coherent path.
+
+- Added a single learner content repository (`lib/learnerContentRepository.ts`) that:
+  - prefers Supabase-backed learner APIs (`/api/packs`, `/api/packs/[id]`)
+  - falls back to local seed content behind the same abstraction
+- Migrated learner readers to the same content path:
+  - Home: pack list resolution still via learner hooks backed by the repository
+  - Review: due phrase hydration now uses repository phrase lookup instead of direct local `contentService`
+  - Phrase detail: now resolves phrase + linked pack context from the repository
+  - Pack study: continues to load from the same repository-backed pack detail hook
+- Added shared learner progress selector hook (`lib/useLearnerProgress.ts`) so due/recent derivations are no longer duplicated across screens.
+
+This keeps fallback behavior available without forcing UI screens to know whether data came from Supabase or local seed content.
