@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { contentService } from "@/lib/content";
 import { hasSupabaseServerEnv, selectServerRows } from "@/lib/supabase/server";
 import { resolvePrimaryAudioByPackIds } from "@/lib/supabase/audioResolver";
 import { getServerAccessToken } from "@/lib/supabase/serverAuth";
@@ -42,10 +41,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const { id } = await params;
 
   if (!hasSupabaseServerEnv()) {
-    const pack = contentService.getPack(id);
-    const phrases = contentService.getPhrasesByPack(id);
-    if (!pack) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ pack, phrases });
+    return NextResponse.json({ error: "Supabase environment variables are missing." }, { status: 500 });
   }
 
   try {
@@ -123,8 +119,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       phrases: orderedPhrases,
     });
   } catch {
-    const fallback = contentService.getPack(id);
-    if (!fallback) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ pack: fallback, phrases: contentService.getPhrasesByPack(id) });
+    return NextResponse.json({ error: "Failed to load pack detail from Supabase." }, { status: 500 });
   }
 }
