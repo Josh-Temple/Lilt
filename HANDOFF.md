@@ -1,5 +1,28 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, Supabase env compatibility)
+
+### Goal
+Configure local env with the provided Supabase project values and ensure the app accepts Supabase's newer publishable key naming.
+
+### What changed
+1. **Local env configured**
+   - Added `.env.local` with:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+
+2. **Runtime key fallback support**
+   - Updated Supabase HTTP helper to accept either:
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (existing)
+     - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (new dashboard naming)
+
+3. **README env docs refreshed**
+   - Environment variable section now documents both supported key names.
+
+### Outcome
+- Existing setups using `NEXT_PUBLIC_SUPABASE_ANON_KEY` keep working.
+- New setups that only define `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` now work without extra changes.
+
 ## Latest session update (2026-04-04, Vercel build fix)
 
 ### Goal
