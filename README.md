@@ -40,7 +40,9 @@ This keeps the app light for a solo creator now while remaining ready for future
   - magic-link sign-in request
   - create/update pack
   - add phrase + pack link
-  - upload pack audio to `audio` bucket path `packs/{pack_slug}/full/v1.mp3`
+  - upload pack audio
+
+- Pack authoring now supports linking existing phrases, editing/unlinking existing `pack_phrases` metadata, and pack audio versioning (`vN`) with newest asset promoted to primary.
 - Added API routes so learning pages can read packs from Supabase (published) with local seed fallback:
   - `GET /api/packs`
   - `GET /api/packs/[id]`
@@ -97,10 +99,26 @@ Open `http://localhost:3000` and `http://localhost:3000/admin`.
 
 - Next.js and `eslint-config-next` are version-ranged from `^15.2.10` to ensure Vercel installs a CVE-patched 15.x release instead of the vulnerable `15.2.5` pin.
 
+
+## Access model update (2026-04-03 migration note)
+
+The initial RLS baseline was tightened so learner reads now align with the intended architecture:
+- **Packs**: learners can read only `published`; admins can read all statuses.
+- **Phrases / pack links**: learners can read only rows connected to published packs; admins can read all.
+- **Audio assets**: learners can read only assets linked to published packs; admins can read all.
+- **Content writes**: still admin-only.
+- **Per-user progress**: still row-owner only.
+
+This removes broad `auth.uid() is not null` read access from content tables and keeps learner access strictly published-content scoped.
+
 ## Notes
 
 - Learning/review UI still supports local fallback behavior while DB-backed progress is phased in.
-- Audio URLs are stored as `storage_path` (not fixed public URL), enabling signed/private delivery later.
+- Audio URLs are stored as `storage_path` in `audio_assets`; learner APIs resolve the current primary asset for each pack.
+
+- DB-backed `/api/packs` and `/api/packs/[id]` now return real linked phrase IDs, tags, and primary pack audio URL from `audio_assets` instead of empty placeholders.
+- Pack detail API preserves authored phrase fields (including variants/contrasts/examples when present) and returns phrase order from `pack_phrases.sort_order` with link metadata for highlighting.
+- Seed JSON fallback behavior remains unchanged when Supabase is unavailable.
 - Scheduler logic remains isolated in `lib/reviewScheduler.ts`.
 
 

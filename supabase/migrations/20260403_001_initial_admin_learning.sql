@@ -139,67 +139,105 @@ as $$
   );
 $$;
 
+drop policy if exists "published packs read" on packs;
 create policy "published packs read"
 on packs
 for select
-using (status = 'published' or auth.uid() is not null);
+using (status = 'published' or is_admin_user());
 
+drop policy if exists "packs admin write" on packs;
 create policy "packs admin write"
 on packs
 for all
 using (is_admin_user())
 with check (is_admin_user());
 
+drop policy if exists "phrases read" on phrases;
 create policy "phrases read"
 on phrases
 for select
-using (auth.uid() is not null);
+using (
+  is_admin_user()
+  or exists (
+    select 1
+    from pack_phrases pp
+    join packs pk on pk.id = pp.pack_id
+    where pp.phrase_id = phrases.id
+      and pk.status = 'published'
+  )
+);
 
+drop policy if exists "phrases admin write" on phrases;
 create policy "phrases admin write"
 on phrases
 for all
 using (is_admin_user())
 with check (is_admin_user());
 
+drop policy if exists "pack_phrases read" on pack_phrases;
 create policy "pack_phrases read"
 on pack_phrases
 for select
-using (auth.uid() is not null);
+using (
+  is_admin_user()
+  or exists (
+    select 1 from packs pk
+    where pk.id = pack_phrases.pack_id
+      and pk.status = 'published'
+  )
+);
 
+drop policy if exists "pack_phrases admin write" on pack_phrases;
 create policy "pack_phrases admin write"
 on pack_phrases
 for all
 using (is_admin_user())
 with check (is_admin_user());
 
+drop policy if exists "audio_assets read" on audio_assets;
 create policy "audio_assets read"
 on audio_assets
 for select
-using (auth.uid() is not null);
+using (
+  is_admin_user()
+  or (
+    audio_assets.pack_id is not null
+    and exists (
+      select 1 from packs pk
+      where pk.id = audio_assets.pack_id
+        and pk.status = 'published'
+    )
+  )
+);
 
+drop policy if exists "audio_assets admin write" on audio_assets;
 create policy "audio_assets admin write"
 on audio_assets
 for all
 using (is_admin_user())
 with check (is_admin_user());
 
+drop policy if exists "profiles self read" on profiles;
 create policy "profiles self read"
 on profiles
 for select
 using (id = auth.uid() or is_admin_user());
 
+drop policy if exists "profiles self update" on profiles;
 create policy "profiles self update"
 on profiles
 for update
 using (id = auth.uid() or is_admin_user())
 with check (id = auth.uid() or is_admin_user());
 
+drop policy if exists "phrase progress own" on user_phrase_progress;
 create policy "phrase progress own"
 on user_phrase_progress
 for all
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
+drop policy if exists "pack progress own" on user_pack_progress;
 create policy "pack progress own"
 on user_pack_progress
 for all

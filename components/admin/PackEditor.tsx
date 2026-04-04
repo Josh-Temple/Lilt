@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { hasSupabaseEnv, insertRows, updateRows, uploadAudio } from "@/lib/supabase/client";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { deleteRows, hasSupabaseEnv, insertRows, selectRows, updateRows, uploadAudio } from "@/lib/supabase/client";
 
 type PackEditorProps = {
   packId?: string;
@@ -43,6 +43,34 @@ type PhraseFormState = {
   endSec: number | "";
 };
 
+type ExistingPhrase = {
+  id: string;
+  slug: string;
+  text: string;
+};
+
+type LinkedPhraseRow = {
+  id: string;
+  sort_order: number;
+  role: "main" | "support";
+  start_char_index: number | null;
+  end_char_index: number | null;
+  start_sec: number | null;
+  end_sec: number | null;
+  phrase: {
+    id: string;
+    slug: string;
+    text: string;
+  } | null;
+};
+
+type AudioAsset = {
+  id: string;
+  storage_path: string;
+  version: number;
+  is_primary: boolean;
+};
+
 const emptyPhraseForm: PhraseFormState = {
   phraseText: "",
   phraseSlug: "",
@@ -60,6 +88,8 @@ const emptyPhraseForm: PhraseFormState = {
   endSec: "",
 };
 
+const toNullableNumber = (value: number | "") => (typeof value === "number" ? value : null);
+
 export function PackEditor({ packId, initial }: PackEditorProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [packForm, setPackForm] = useState<PackFormState>({
@@ -72,6 +102,9 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
     status: initial?.status ?? "draft",
   });
   const [phraseForm, setPhraseForm] = useState<PhraseFormState>(emptyPhraseForm);
+  const [existingPhraseQuery, setExistingPhraseQuery] = useState("");
+  const [existingPhrases, setExistingPhrases] = useState<ExistingPhrase[]>([]);
+  const [linkedPhrases, setLinkedPhrases] = useState<LinkedPhraseRow[]>([]);
 
   const runAction = async (action: () => Promise<void>) => {
     try {
@@ -90,6 +123,37 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
     setPhraseForm((current) => ({ ...current, [key]: value }));
   };
 
+  const loadLinkedPhrases = useCallback(async () => {
+    if (!hasSupabaseEnv() || !packId) return;
+
+    const rows = await selectRows<LinkedPhraseRow[]>(
+      "pack_phrases",
+      `select=id,sort_order,role,start_char_index,end_char_index,start_sec,end_sec,phrase:phrases(id,slug,text)&pack_id=eq.${encodeURIComponent(packId)}&order=sort_order.asc`,
+    );
+
+    setLinkedPhrases(rows);
+  }, [packId]);
+
+  useEffect(() => {
+    loadLinkedPhrases().catch(() => undefined);
+  }, [loadLinkedPhrases]);
+
+  useEffect(() => {
+    if (!hasSupabaseEnv() || !existingPhraseQuery.trim()) {
+      setExistingPhrases([]);
+      return;
+    }
+
+    const term = existingPhraseQuery.trim().replace(/,/g, "");
+    const q = encodeURIComponent(`*${term}*`);
+    selectRows<ExistingPhrase[]>(
+      "phrases",
+      `select=id,slug,text&or=(slug.ilike.${q},text.ilike.${q})&order=created_at.desc&limit=15`,
+    )
+      .then(setExistingPhrases)
+      .catch(() => setExistingPhrases([]));
+  }, [existingPhraseQuery]);
+
   const savePack = async () => {
     await runAction(async () => {
       if (!hasSupabaseEnv()) throw new Error("Supabase env vars missing");
@@ -105,7 +169,7 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
         return;
       }
 
-      await updateRows("packs", `id=eq.${packId}`, packForm);
+      await updateRows("packs", `id=eq.${encodeURIComponent(packId)}`, packForm);
       setMessage("Pack saved");
     });
   };
@@ -136,35 +200,85 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
         phrase_id: phraseId,
         sort_order: phraseForm.sortOrder,
         role: phraseForm.role,
-        start_char_index: typeof phraseForm.startChar === "number" ? phraseForm.startChar : null,
-        end_char_index: typeof phraseForm.endChar === "number" ? phraseForm.endChar : null,
-        start_sec: typeof phraseForm.startSec === "number" ? phraseForm.startSec : null,
-        end_sec: typeof phraseForm.endSec === "number" ? phraseForm.endSec : null,
+        start_char_index: toNullableNumber(phraseForm.startChar),
+        end_char_index: toNullableNumber(phraseForm.endChar),
+        start_sec: toNullableNumber(phraseForm.startSec),
+        end_sec: toNullableNumber(phraseForm.endSec),
       });
 
       setMessage("Phrase + link created");
       setPhraseForm(emptyPhraseForm);
+      await loadLinkedPhrases();
+    });
+  };
+
+  const linkExistingPhrase = async (phraseId: string) => {
+    await runAction(async () => {
+      if (!hasSupabaseEnv() || !packId) throw new Error("Create pack first");
+
+      await insertRows("pack_phrases", {
+        pack_id: packId,
+        phrase_id: phraseId,
+        sort_order: linkedPhrases.length,
+        role: "support",
+      });
+
+      setMessage("Existing phrase linked");
+      await loadLinkedPhrases();
+    });
+  };
+
+  const updateLink = async (id: string, payload: Record<string, unknown>) => {
+    await runAction(async () => {
+      await updateRows("pack_phrases", `id=eq.${encodeURIComponent(id)}`, payload);
+      setMessage("Link updated");
+      await loadLinkedPhrases();
+    });
+  };
+
+  const removeLink = async (id: string) => {
+    await runAction(async () => {
+      await deleteRows("pack_phrases", `id=eq.${encodeURIComponent(id)}`);
+      setMessage("Phrase unlinked from pack");
+      await loadLinkedPhrases();
     });
   };
 
   const onUploadPackAudio = async (file: File | null) => {
     await runAction(async () => {
       if (!hasSupabaseEnv() || !packId || !file) throw new Error("Choose audio after creating the pack");
-      const path = `packs/${packForm.slug}/full/v1.mp3`;
+
+      const existing = await selectRows<AudioAsset[]>(
+        "audio_assets",
+        `select=id,storage_path,version,is_primary&pack_id=eq.${encodeURIComponent(packId)}&kind=eq.pack_full&order=version.desc`,
+      );
+      const nextVersion = (existing[0]?.version ?? 0) + 1;
+      const extension = file.name.includes(".") ? file.name.split(".").pop() : "mp3";
+      const path = `packs/${packForm.slug}/full/v${nextVersion}.${extension}`;
 
       await uploadAudio(path, file);
+
+      const previousPrimary = existing.filter((asset) => asset.is_primary);
+      await Promise.all(
+        previousPrimary.map((asset) =>
+          updateRows("audio_assets", `id=eq.${encodeURIComponent(asset.id)}`, { is_primary: false }),
+        ),
+      );
+
       await insertRows("audio_assets", {
         pack_id: packId,
         kind: "pack_full",
         storage_path: path,
         mime_type: file.type || "audio/mpeg",
         is_primary: true,
-        version: 1,
+        version: nextVersion,
       });
 
-      setMessage("Pack audio uploaded");
+      setMessage(`Pack audio uploaded (v${nextVersion})`);
     });
   };
+
+  const linkedPhraseIds = useMemo(() => new Set(linkedPhrases.map((row) => row.phrase?.id).filter(Boolean)), [linkedPhrases]);
 
   return (
     <div className="space-y-4">
@@ -221,9 +335,62 @@ export function PackEditor({ packId, initial }: PackEditorProps) {
       </section>
 
       <section className="card space-y-3">
+        <h2 className="text-lg font-semibold">Link existing phrase</h2>
+        <input
+          className="w-full rounded-xl border p-2"
+          placeholder="Search by slug or text"
+          value={existingPhraseQuery}
+          onChange={(e) => setExistingPhraseQuery(e.target.value)}
+        />
+        <div className="space-y-2">
+          {existingPhrases.map((phrase) => (
+            <div key={phrase.id} className="flex items-center justify-between rounded-xl border border-slate-200 p-2">
+              <div>
+                <p className="text-sm font-medium">{phrase.text}</p>
+                <p className="text-xs text-slate-500">{phrase.slug}</p>
+              </div>
+              <button
+                className="btn-secondary"
+                disabled={linkedPhraseIds.has(phrase.id)}
+                onClick={() => linkExistingPhrase(phrase.id)}
+              >
+                {linkedPhraseIds.has(phrase.id) ? "Linked" : "Link"}
+              </button>
+            </div>
+          ))}
+          {!existingPhrases.length && existingPhraseQuery.trim() ? <p className="text-xs text-slate-500">No phrases found.</p> : null}
+        </div>
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-lg font-semibold">Linked phrases</h2>
+        <div className="space-y-3">
+          {linkedPhrases.map((link) => (
+            <div key={link.id} className="space-y-2 rounded-xl border border-slate-200 p-3">
+              <p className="font-medium">{link.phrase?.text ?? "Unknown phrase"}</p>
+              <p className="text-xs text-slate-500">{link.phrase?.slug ?? "-"}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input type="number" className="rounded-xl border p-2" defaultValue={link.sort_order} onBlur={(e) => updateLink(link.id, { sort_order: Number(e.target.value) || 0 })} />
+                <select className="rounded-xl border p-2" defaultValue={link.role} onChange={(e) => updateLink(link.id, { role: e.target.value })}>
+                  <option value="main">main</option>
+                  <option value="support">support</option>
+                </select>
+                <input type="number" className="rounded-xl border p-2" defaultValue={link.start_char_index ?? ""} placeholder="start_char_index" onBlur={(e) => updateLink(link.id, { start_char_index: e.target.value === "" ? null : Number(e.target.value) })} />
+                <input type="number" className="rounded-xl border p-2" defaultValue={link.end_char_index ?? ""} placeholder="end_char_index" onBlur={(e) => updateLink(link.id, { end_char_index: e.target.value === "" ? null : Number(e.target.value) })} />
+                <input type="number" className="rounded-xl border p-2" defaultValue={link.start_sec ?? ""} placeholder="start_sec" onBlur={(e) => updateLink(link.id, { start_sec: e.target.value === "" ? null : Number(e.target.value) })} />
+                <input type="number" className="rounded-xl border p-2" defaultValue={link.end_sec ?? ""} placeholder="end_sec" onBlur={(e) => updateLink(link.id, { end_sec: e.target.value === "" ? null : Number(e.target.value) })} />
+              </div>
+              <button className="text-xs text-rose-600" onClick={() => removeLink(link.id)}>Unlink phrase</button>
+            </div>
+          ))}
+          {!linkedPhrases.length ? <p className="text-xs text-slate-500">No linked phrases yet.</p> : null}
+        </div>
+      </section>
+
+      <section className="card space-y-3">
         <h2 className="text-lg font-semibold">Pack audio upload</h2>
         <input type="file" accept="audio/*" onChange={(e) => onUploadPackAudio(e.target.files?.[0] ?? null)} />
-        <p className="text-xs text-slate-500">Stored as packs/{'{pack_slug}'}/full/v1.mp3 in private bucket `audio`.</p>
+        <p className="text-xs text-slate-500">Stored as packs/{"{pack_slug}"}/full/vN.ext in private bucket `audio`, with newest asset marked primary.</p>
       </section>
 
       {message ? <p className="text-sm text-slate-600">{message}</p> : null}

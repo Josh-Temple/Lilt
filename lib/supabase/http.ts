@@ -11,7 +11,7 @@ export function getSupabaseEnv() {
 
 type RequestArgs = {
   path: string;
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   token?: string;
   headers?: Record<string, string>;
   body?: BodyInit | null;
