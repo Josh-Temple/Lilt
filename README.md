@@ -110,3 +110,8 @@ A focused iteration improved in-context phrase noticing inside pack study:
 - when phrase timing metadata exists, pack study offers phrase-aware listening actions (jump/replay).
 - a lightweight study mode toggle helps reduce cognitive load by hiding the full phrase list during focused study.
 - behavior gracefully falls back when span/timing metadata is missing.
+
+## Build reliability note (2026-04-04)
+
+- Learner pack page Hook declarations were stabilized so `useEffect` / `useMemo` are always called in consistent render order.
+- This resolves `react-hooks/rules-of-hooks` build failures seen during Vercel `npm run build`.
