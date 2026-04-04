@@ -1,5 +1,24 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, follow-up hooks lint fix)
+
+### Goal
+Fix the remaining production lint/build failure reported by Vercel:
+`React Hook "useMemo" is called conditionally` in `app/pack/[id]/page.tsx`.
+
+### What changed
+1. **Hook order made unconditional in pack learner page**
+   - Moved `const phraseList` + transcript `useMemo` above early return branches.
+   - Added a guard inside `useMemo` for pre-load renders (`if (!pack || !progress) return ""`).
+   - Updated `useMemo` dependency expressions to null-safe access (`pack?.transcript`, `progress?.phraseProgress`).
+
+2. **Docs updated**
+   - README build reliability note now includes the exact `useMemo` ordering/guard fix.
+
+### Outcome
+- Hook invocation order is now stable across all renders.
+- This directly addresses the Vercel `react-hooks/rules-of-hooks` failure in the pack page.
+
 ## Latest session update (2026-04-04, Supabase-first learner APIs)
 
 ### Goal

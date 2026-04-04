@@ -108,17 +108,11 @@ export default function LearnPackPage() {
       }
     };
   }, []);
-
-  if (!pack && !loading) return notFound();
-  if (!progress || !pack) return <p>Loading...</p>;
-
-  const dueCount = progressStore.getDuePhraseIds(progress).length;
-  const packState = progress.packProgress[pack.id];
-  const statusLabel = packState?.completed ? "completed" : packState?.lastOpenedAt ? "in progress" : "new";
   const phraseList = phrases as PhraseWithLink[];
-  const focusedPhrase = phraseList.find((item) => item.id === focusedPhraseId) ?? null;
 
   const transcript = useMemo(() => {
+    if (!pack || !progress) return "";
+
     const phraseState = Object.fromEntries(
       phraseList.map((phrase) => [
         phrase.id,
@@ -134,7 +128,15 @@ export default function LearnPackPage() {
       phraseState,
       onFocus: (phraseId) => setFocusedPhraseId(phraseId),
     });
-  }, [focusedPhraseId, pack.transcript, phraseList, progress.phraseProgress]);
+  }, [focusedPhraseId, pack?.transcript, phraseList, progress?.phraseProgress]);
+
+  if (!pack && !loading) return notFound();
+  if (!progress || !pack) return <p>Loading...</p>;
+
+  const dueCount = progressStore.getDuePhraseIds(progress).length;
+  const packState = progress.packProgress[pack.id];
+  const statusLabel = packState?.completed ? "completed" : packState?.lastOpenedAt ? "in progress" : "new";
+  const focusedPhrase = phraseList.find((item) => item.id === focusedPhraseId) ?? null;
 
   const jumpToFocused = (replay = false) => {
     if (!focusedPhrase?.packLink?.start_sec || !audioRef.current) return;

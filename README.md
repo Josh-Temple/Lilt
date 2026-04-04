@@ -117,6 +117,7 @@ A focused iteration improved in-context phrase noticing inside pack study:
 
 - Learner pack page Hook declarations were stabilized so `useEffect` / `useMemo` are always called in consistent render order.
 - This resolves `react-hooks/rules-of-hooks` build failures seen during Vercel `npm run build`.
+- Specifically, the transcript `useMemo` is now declared before early-return branches and guarded for pre-load renders (`!pack || !progress`) so Hook order stays invariant.
 
 ## Supabase-first content delivery update (2026-04-04)
 
