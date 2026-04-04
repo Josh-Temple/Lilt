@@ -2,26 +2,20 @@
 
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
-import { progressStore } from "@/lib/progressStore";
 import { usePacks } from "@/lib/usePacks";
-import { useProgress } from "@/lib/useProgress";
+import { useLearnerProgress } from "@/lib/useLearnerProgress";
 
 export default function HomePage() {
-  const { progress, source } = useProgress();
+  const { progress, source, dueCount, recentPackProgress } = useLearnerProgress();
   const packs = usePacks();
 
   if (!progress) return <p>Loading...</p>;
 
-  const dueCount = progressStore.getDuePhraseIds(progress).length;
-  const recent = Object.values(progress.packProgress)
-    .filter((pack) => pack.lastOpenedAt)
-    .sort((a, b) => (a.lastOpenedAt! < b.lastOpenedAt! ? 1 : -1));
-
-  const currentPack = recent
+  const currentPack = recentPackProgress
     .map((item) => packs.find((pack) => pack.id === item.packId))
     .find(Boolean);
 
-  const secondaryPacks = recent
+  const secondaryPacks = recentPackProgress
     .slice(1, 3)
     .map((item) => packs.find((pack) => pack.id === item.packId))
     .filter(Boolean);
