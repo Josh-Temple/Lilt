@@ -1,23 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { contentService } from "@/lib/content";
 import { Pack, Phrase } from "@/lib/types";
 
 export function usePacks() {
-  const [packs, setPacks] = useState<Pack[]>(contentService.getPacks());
+  const [packs, setPacks] = useState<Pack[]>([]);
 
   useEffect(() => {
     let active = true;
 
     fetch("/api/packs")
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        return res.json();
+      })
       .then((json) => {
         if (!active || !Array.isArray(json.packs)) return;
         setPacks(json.packs as Pack[]);
       })
       .catch(() => {
-        // keep local seed fallback
+        if (!active) return;
+        setPacks([]);
       });
 
     return () => {
@@ -29,8 +34,8 @@ export function usePacks() {
 }
 
 export function usePackDetail(id: string) {
-  const [pack, setPack] = useState<Pack | null>(contentService.getPack(id) ?? null);
-  const [phrases, setPhrases] = useState<Phrase[]>(contentService.getPhrasesByPack(id));
+  const [pack, setPack] = useState<Pack | null>(null);
+  const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,7 +43,12 @@ export function usePackDetail(id: string) {
 
     setLoading(true);
     fetch(`/api/packs/${id}`)
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        return res.json();
+      })
       .then((json) => {
         if (!active) return;
         if (json.pack) {
@@ -47,6 +57,11 @@ export function usePackDetail(id: string) {
         if (Array.isArray(json.phrases)) {
           setPhrases(json.phrases as Phrase[]);
         }
+      })
+      .catch(() => {
+        if (!active) return;
+        setPack(null);
+        setPhrases([]);
       })
       .finally(() => {
         if (active) {

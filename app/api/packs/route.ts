@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { contentService } from "@/lib/content";
 import { hasSupabaseServerEnv, selectServerRows } from "@/lib/supabase/server";
 import { resolvePrimaryAudioByPackIds } from "@/lib/supabase/audioResolver";
 import { getServerAccessToken } from "@/lib/supabase/serverAuth";
@@ -26,7 +25,7 @@ type DbPhraseTag = {
 
 export async function GET() {
   if (!hasSupabaseServerEnv()) {
-    return NextResponse.json({ packs: contentService.getPacks() });
+    return NextResponse.json({ error: "Supabase environment variables are missing." }, { status: 500 });
   }
 
   try {
@@ -87,6 +86,6 @@ export async function GET() {
 
     return NextResponse.json({ packs });
   } catch {
-    return NextResponse.json({ packs: contentService.getPacks() });
+    return NextResponse.json({ error: "Failed to load packs from Supabase." }, { status: 500 });
   }
 }

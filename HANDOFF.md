@@ -1,5 +1,28 @@
 # Handoff Notes
 
+## Latest session update (2026-04-04, Supabase-first learner APIs)
+
+### Goal
+Implement learner-side data loading with a Supabase-first assumption now that Vercel env is configured.
+
+### What changed
+1. **Removed local content fallback from learner APIs**
+   - `GET /api/packs` now returns an explicit `500` when Supabase env is missing or Supabase read fails.
+   - `GET /api/packs/[id]` now returns an explicit `500` when Supabase env is missing or Supabase read fails.
+
+2. **Client pack hooks now assume API-backed data**
+   - `usePacks` now initializes from an empty list and handles non-OK API responses as fetch failures.
+   - `usePackDetail` now initializes with `null`/empty values and handles non-OK API responses explicitly.
+
+3. **README updated**
+   - Added a new section documenting Supabase-first learner API behavior and removed outdated wording about local fallback scope.
+
+### Outcome
+- Production behavior now aligns with a Supabase-first deployment model.
+- Misconfiguration and backend failures are surfaced clearly instead of silently falling back to local seed content.
+
+---
+
 ## Latest session update (2026-04-04, Supabase env compatibility)
 
 ### Goal

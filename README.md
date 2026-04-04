@@ -20,7 +20,7 @@ The learner loop is now end-to-end:
 - TypeScript
 - Tailwind CSS
 - Supabase Auth (magic link), Postgres (content + progress), Storage (audio bucket)
-- Local progress store remains as fallback if Supabase/auth is unavailable
+- Local progress store remains as fallback only for per-user progress when auth is unavailable
 
 ## Implemented now
 
@@ -117,3 +117,11 @@ A focused iteration improved in-context phrase noticing inside pack study:
 
 - Learner pack page Hook declarations were stabilized so `useEffect` / `useMemo` are always called in consistent render order.
 - This resolves `react-hooks/rules-of-hooks` build failures seen during Vercel `npm run build`.
+
+## Supabase-first content delivery update (2026-04-04)
+
+- Learner pack APIs now run in **Supabase-first mode**:
+  - `/api/packs`
+  - `/api/packs/[id]`
+- Local seed-content fallback for these APIs has been removed.
+- If Supabase env is missing or the Supabase request fails, these APIs now return explicit `500` errors.
