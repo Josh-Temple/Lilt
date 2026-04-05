@@ -38,6 +38,13 @@ function isReviewEligible(item: Pick<PhraseProgress, "saved" | "confusing" | "wa
   return Boolean(item.saved || item.confusing || item.wantToUse);
 }
 
+function deriveReviewState(
+  item: Pick<PhraseProgress, "saved" | "confusing" | "wantToUse" | "dueAt">,
+): PhraseProgress["reviewState"] {
+  if (!isReviewEligible(item)) return "new";
+  return new Date(item.dueAt).getTime() <= Date.now() ? "review" : "learning";
+}
+
 const migrate = (raw: unknown): UserProgressV1 => {
   if (!raw || typeof raw !== "object") return emptyProgress();
   const candidate = raw as Partial<UserProgressV1>;
@@ -85,7 +92,18 @@ export const progressStore = {
   toggleSaved(progress: UserProgressV1, phraseId: string) {
     const base = progress.phraseProgress[phraseId] ?? initPhraseProgress(phraseId);
     const nextSaved = !base.saved;
-    progress.phraseProgress[phraseId] = { ...base, saved: nextSaved, reviewState: nextSaved ? "learning" : "new" };
+    const nextDueAt = nextSaved ? new Date().toISOString() : base.dueAt;
+    progress.phraseProgress[phraseId] = {
+      ...base,
+      saved: nextSaved,
+      dueAt: nextDueAt,
+      reviewState: deriveReviewState({
+        saved: nextSaved,
+        confusing: base.confusing,
+        wantToUse: base.wantToUse,
+        dueAt: nextDueAt,
+      }),
+    };
 
     if (nextSaved && !progress.savedPhraseIds.includes(phraseId)) {
       progress.savedPhraseIds.push(phraseId);
@@ -105,8 +123,8 @@ export const progressStore = {
 
     if ((flag === "confusing" || flag === "wantToUse") && nextValue) {
       next.dueAt = new Date().toISOString();
-      next.reviewState = next.reviewState === "new" ? "learning" : next.reviewState;
     }
+    next.reviewState = deriveReviewState(next);
 
     progress.phraseProgress[phraseId] = next;
     this.save(progress);
@@ -124,7 +142,12 @@ export const progressStore = {
       ...base,
       ...next,
       saved: true,
-      reviewState: "review",
+      reviewState: deriveReviewState({
+        saved: true,
+        confusing: base.confusing,
+        wantToUse: base.wantToUse,
+        dueAt: next.dueAt,
+      }),
       easyCount: (base.easyCount ?? 0) + (rating === "easy" ? 1 : 0),
       closeCount: (base.closeCount ?? 0) + (rating === "close" ? 1 : 0),
       hardCount: (base.hardCount ?? 0) + (rating === "hard" ? 1 : 0),

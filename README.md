@@ -219,6 +219,22 @@ This keeps review tied to real pack actions without changing scheduler complexit
 
 Review now leans more consistently on real authored/pack-linked context while staying fast.
 
+## Review loop verification hardening (2026-04-05)
+
+Additional verification-focused hardening was added so the pack -> progress -> due queue -> review chain is easier to trust and debug.
+
+- Save action now guarantees immediate due-eligibility timing:
+  - toggling `saved` on resets `dueAt` to `now` (predictable first review availability)
+- Phrase `reviewState` is now derived from eligibility + due timing:
+  - `new` when not eligible (`saved || confusing || wantToUse` is false)
+  - `learning` when eligible but not yet due
+  - `review` when eligible and due
+- Added chain diagnostics in learner flow:
+  - pack/phrase actions now log phrase snapshot + resulting due IDs
+  - review render now logs whether queue is populated or which empty reason is active
+
+This keeps the scheduler simple while making real pack study actions reliably visible in Review.
+
 - Review context payload now carries compact authored support candidates:
   - transcript excerpt (pack-derived)
   - example
