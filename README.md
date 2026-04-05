@@ -267,3 +267,9 @@ Scope remains intentionally simple:
 - no waveform/editor features
 - no complex playback customization
 - no scheduler/review model changes
+
+## PWA empty-library resilience fix (2026-04-05)
+
+- Fixed a high-impact learner issue where the PWA could show zero packs even though local seed content exists.
+- `learnerContentRepository.getPublishedPacks()` now falls back to local seed packs when `/api/packs` returns an empty list, not only when the request fails.
+- This makes the Library and Home entry path recoverable in offline / stale-cache / misconfigured-Supabase states while keeping Supabase-first behavior when published packs are available.
