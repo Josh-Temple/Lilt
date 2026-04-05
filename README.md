@@ -219,6 +219,30 @@ This keeps review tied to real pack actions without changing scheduler complexit
 
 Review now leans more consistently on real authored/pack-linked context while staying fast.
 
+## Troubleshooting: PWA shows zero packs (2026-04-05)
+
+If the app is opened as a PWA and no packs are visible, check these in order:
+
+1. **Published status in Supabase**
+   - Learner pack API reads `packs` with `status=eq.published`.
+   - Draft/unpublished packs will not appear.
+
+2. **Supabase server env availability**
+   - `GET /api/packs` returns `500` when server env vars are missing.
+   - Confirm `NEXT_PUBLIC_SUPABASE_URL` and anon/publishable key are correctly set for the deployed target.
+
+3. **PWA stale cache after deploy**
+   - Installed PWAs can keep older JS bundles and API behavior until refreshed.
+   - Force-close and relaunch, then hard refresh/reinstall if needed.
+
+4. **Auth/session differences**
+   - If the PWA runs under a different session context, user-specific progress may differ from browser-tab behavior.
+   - This usually does not hide packs themselves, but can make Home appear empty of "continue" context.
+
+5. **Network/API error in device context**
+   - On the device, check `GET /api/packs` response.
+   - If it fails, learner screens may show an empty list depending on runtime path.
+
 ## Review loop verification hardening (2026-04-05)
 
 Additional verification-focused hardening was added so the pack -> progress -> due queue -> review chain is easier to trust and debug.
