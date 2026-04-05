@@ -18,6 +18,8 @@ export type LearnerPhraseWithContext = LearnerPhrase & {
     packTopic?: string;
     transcriptExcerpt?: string;
     example?: string;
+    authoredNote?: string;
+    authoredContrast?: string;
   };
 };
 
@@ -75,6 +77,12 @@ function createTranscriptExcerpt(transcript: string, phrase: LearnerPhrase): str
   const fallbackEnd = Math.min(transcript.length, phraseIndex + phraseStem.length + 38);
   const fallback = transcript.slice(fallbackStart, fallbackEnd).replace(/\s+/g, " ").trim();
   return fallback || undefined;
+}
+
+function compactText(value?: string): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized || undefined;
 }
 
 function buildFallbackPackDetail(packId: string): LearnerPackDetail {
@@ -144,7 +152,9 @@ export const learnerContentRepository = {
             packTitle: pack.title,
             packTopic: pack.topic,
             transcriptExcerpt,
-            example: phrase.examples[0],
+            example: compactText(phrase.examples[0]),
+            authoredNote: compactText(phrase.notes),
+            authoredContrast: compactText(phrase.contrasts[0]),
           },
         };
       }
