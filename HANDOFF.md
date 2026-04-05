@@ -1,5 +1,88 @@
 # Handoff Notes
 
+## Latest session update (2026-04-05, phrase timing replay flow polish)
+
+### Goal
+Make phrase timing metadata materially more useful during pack study by tightening replay flow and phrase-context continuity.
+
+### What changed
+1. **Pack deep-link focus from review/source context**
+   - `app/pack/[id]/page.tsx` now reads `?phrase=<id>` and pre-focuses that phrase when present.
+   - `app/review/page.tsx` source-pack link now includes phrase query (`/pack/:id?phrase=:phraseId`) so return-to-pack lands in the right context.
+
+2. **Playback-to-phrase awareness improved**
+   - Pack audio now tracks current playback time and derives a subtle active phrase cue (`Now hearing: ...`) from timing metadata.
+   - Added a lightweight `Focus currently playing` action when audio is on a different phrase than the focused one.
+
+3. **Partial timing metadata handled more clearly**
+   - Focus panel timing now marks estimated end windows when `end_sec` is missing (uses existing `start + 2.5s` fallback).
+   - This makes partial timing behavior explicit instead of appearing exact.
+
+4. **Replay controls kept compact but more robust**
+   - Existing high-value controls stay unchanged in scope:
+     - Jump to phrase
+     - Replay phrase
+     - Replay + context
+     - Repeat x2
+   - Controls now disable when phrase-audio actions cannot run (e.g., pack has no audio URL), preventing dead-click behavior.
+
+5. **README updated**
+   - Added `Timing replay flow polish (2026-04-05)` describing these changes and intentionally preserved simplicity.
+
+### Intentionally kept simple
+- No waveform/timeline editor.
+- No advanced repeat profile matrix.
+- No admin timing workflow expansion.
+- No review scheduler/rating redesign.
+
+### Next best task
+Polish **pack completion -> review transition** after timing-based rehearing:
+1. Add a tiny “review this reheard phrase next” nudge in pack flow.
+2. Keep it optional and one-tap so default pack study remains calm.
+3. Maintain coherent due-count messaging between Pack/Home/Review.
+
+## Latest session update (2026-04-05, pack-authored review continuity polish)
+
+### Goal
+Strengthen the feeling that review is a continuation of studied packs by preferring real pack/authored support context without adding product scope.
+
+### What changed
+1. **Review context payload expanded (repository level)**
+   - `lib/learnerContentRepository.ts` now includes compact authored support fields in `reviewContext`:
+     - `authoredNote`
+     - `authoredContrast`
+   - Existing pack-derived/transcript and example fields remain, now normalized via compact text cleanup.
+
+2. **Review reveal now uses one consistent support clue**
+   - `app/review/page.tsx` now picks exactly one support line using clear priority:
+     1. Transcript excerpt (pack-derived)
+     2. Example
+     3. Note
+     4. Contrast
+   - The UI labels the clue source (`Transcript`, `Example`, `Note`, `Contrast`) to keep context meaningful and trustworthy.
+
+3. **Prompt-mode scope stayed intentionally tight**
+   - Existing lightweight modes remain:
+     - meaning -> phrase
+     - phrase -> meaning
+     - cloze/context (only from transcript/example lines)
+   - Cloze/context inputs continue to avoid note/contrast text so prompts remain coherent and quick.
+
+4. **README updated**
+   - Added `Review authored-context polish (2026-04-05)` describing the continuity-focused update and unchanged scheduler scope.
+
+### Intentionally kept simple
+- No scheduler changes.
+- No new rating options.
+- No chatbot/tutor behavior.
+- No heavy review navigation or panel complexity.
+
+### Next best task
+Refine **phrase-timing-based audio repetition** from the review continuation path:
+1. Add an optional, low-friction “rehear phrase in source pack” jump when timing metadata exists.
+2. Tune phrase/context replay window defaults for mobile speed and clarity.
+3. Keep fallback behavior explicit when timing metadata is missing.
+
 ## Latest session update (2026-04-05, review queue flow repair)
 
 ### Goal

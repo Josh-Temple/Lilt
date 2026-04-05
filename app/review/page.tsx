@@ -8,6 +8,7 @@ import { useLearnerProgress } from "@/lib/useLearnerProgress";
 import { usePhrasesByIds } from "@/lib/usePacks";
 
 type ReviewMode = "meaning_to_phrase" | "phrase_to_meaning" | "cloze" | "context_to_phrase";
+type SupportKind = "Transcript" | "Example" | "Note" | "Contrast";
 
 function lineContainsPhrase(line: string, phraseText: string) {
   const cleanPhrase = phraseText.replace("...", "").trim();
@@ -30,19 +31,40 @@ function buildClozeLine(line: string, phraseText: string): string {
   return line.replace(re, "_____");
 }
 
+function pickSupportClue(current: NonNullable<ReturnType<typeof useReviewCardContext>["current"]>) {
+  const transcript = current.reviewContext?.transcriptExcerpt?.trim();
+  if (transcript) return { label: "Transcript" as SupportKind, text: transcript };
+
+  const example = current.reviewContext?.example?.trim();
+  if (example) return { label: "Example" as SupportKind, text: example };
+
+  const note = current.reviewContext?.authoredNote?.trim();
+  if (note) return { label: "Note" as SupportKind, text: note };
+
+  const contrast = current.reviewContext?.authoredContrast?.trim();
+  if (contrast) return { label: "Contrast" as SupportKind, text: contrast };
+
+  return null;
+}
+
+function useReviewCardContext(queue: ReturnType<typeof usePhrasesByIds>["phrases"], index: number) {
+  const current = useMemo(() => (queue.length ? queue[index % queue.length] : null), [index, queue]);
+  const contextPromptLine = current?.reviewContext?.transcriptExcerpt ?? current?.reviewContext?.example ?? null;
+  const modeList = useMemo(
+    () => getReviewModes(contextPromptLine, current?.text ?? ""),
+    [contextPromptLine, current?.text],
+  );
+  const mode = modeList[index % modeList.length];
+
+  return { current, contextPromptLine, mode };
+}
+
 export default function ReviewPage() {
   const { progress, duePhraseIds, reviewPhrase, reviewDiagnostics } = useLearnerProgress();
   const { phrases: queue, loading } = usePhrasesByIds(duePhraseIds);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
-
-  const current = useMemo(() => (queue.length ? queue[index % queue.length] : null), [index, queue]);
-  const compactContext = current?.reviewContext?.transcriptExcerpt ?? current?.reviewContext?.example ?? null;
-  const modeList = useMemo(
-    () => getReviewModes(compactContext, current?.text ?? ""),
-    [compactContext, current?.text],
-  );
-  const mode = modeList[index % modeList.length];
+  const { current, contextPromptLine, mode } = useReviewCardContext(queue, index);
 
   if (!progress || loading) return <p>Loading...</p>;
   if (!current) {
@@ -97,11 +119,12 @@ export default function ReviewPage() {
   const promptText =
     mode === "phrase_to_meaning"
       ? current.text
-      : mode === "cloze" && compactContext
-        ? buildClozeLine(compactContext, current.text)
-        : mode === "context_to_phrase" && compactContext
-          ? compactContext
+      : mode === "cloze" && contextPromptLine
+        ? buildClozeLine(contextPromptLine, current.text)
+        : mode === "context_to_phrase" && contextPromptLine
+          ? contextPromptLine
           : current.meaningJa;
+  const supportClue = pickSupportClue(current);
 
   return (
     <div>
@@ -127,15 +150,15 @@ export default function ReviewPage() {
               <p className="text-lg font-medium">{current.text}</p>
             )}
             {mode !== "phrase_to_meaning" ? <p className="text-sm text-slate-600">{current.meaningJa}</p> : null}
-            {current.reviewContext?.transcriptExcerpt ? (
-              <p className="text-xs text-slate-500">Context: {current.reviewContext.transcriptExcerpt}</p>
-            ) : current.examples[0] ? (
-              <p className="text-xs text-slate-500">Example: {current.examples[0]}</p>
+            {supportClue ? (
+              <p className="text-xs text-slate-500">
+                {supportClue.label}: {supportClue.text}
+              </p>
             ) : null}
             <div className="flex flex-wrap gap-2 pt-1 text-xs">
               <Link href={`/phrase/${current.id}`} className="btn inline-flex">Phrase detail</Link>
               {current.reviewContext?.packId ? (
-                <Link href={`/pack/${current.reviewContext.packId}`} className="btn inline-flex">Open source pack</Link>
+                <Link href={`/pack/${current.reviewContext.packId}?phrase=${current.id}`} className="btn inline-flex">Open source pack</Link>
               ) : null}
             </div>
           </div>

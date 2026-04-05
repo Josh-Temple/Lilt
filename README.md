@@ -214,3 +214,40 @@ Pack study now uses phrase timing metadata more directly for fast, low-friction 
   - due IDs exist but phrase hydration failed
 
 This keeps review tied to real pack actions without changing scheduler complexity or product scope.
+
+## Review authored-context polish (2026-04-05)
+
+Review now leans more consistently on real authored/pack-linked context while staying fast.
+
+- Review context payload now carries compact authored support candidates:
+  - transcript excerpt (pack-derived)
+  - example
+  - note
+  - contrast
+- Review reveal now shows exactly one compact support clue with clear provenance:
+  - `Transcript`, `Example`, `Note`, or `Contrast`
+  - chosen in that order so pack-derived context is preferred first
+- Prompt mode behavior remains intentionally narrow and lightweight:
+  - meaning -> phrase
+  - phrase -> meaning
+  - cloze/context prompts only when transcript/example context is available
+- Scheduler and rating model remain unchanged (`easy` / `close` / `hard`).
+
+This keeps review feeling like continuation of pack learning, not a disconnected generic card loop.
+
+## Timing replay flow polish (2026-04-05)
+
+Pack study timing controls were refined to make phrase-level audio repetition more practical and better connected to transcript focus.
+
+- Pack page now supports phrase-focused deep links from review/source context:
+  - `/pack/:id?phrase=:phraseId` pre-focuses the relevant phrase in study.
+- Audio playback now surfaces a subtle “Now hearing” cue based on timing ranges while audio plays.
+- Focus panel timing cue now distinguishes partial timing metadata:
+  - if `end_sec` is missing, target end is estimated (`start + 2.5s`) and labeled as estimated.
+- Phrase replay controls remain compact (`jump`, `replay phrase`, `replay + context`, `repeat x2`) and are now disabled when phrase-level audio actions cannot run (e.g., missing audio URL).
+- Review -> source-pack action now carries the phrase id query so learners can return directly to the same phrase context.
+
+Scope remains intentionally simple:
+- no waveform/editor features
+- no complex playback customization
+- no scheduler/review model changes

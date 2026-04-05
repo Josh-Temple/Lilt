@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { LearnerPhrase } from "@/lib/learnerContentRepository";
@@ -74,6 +74,7 @@ function renderTranscript(transcript: string, phrases: PhraseWithLink[], context
 
 export default function LearnPackPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { pack, phrases, loading } = usePackDetail(params.id);
   const { progress, dueCount, markPackOpened, markPackCompleted, toggleSaved, toggleFlag } = useLearnerProgress();
 
@@ -81,6 +82,7 @@ export default function LearnPackPage() {
   const [studyMode, setStudyMode] = useState(true);
   const [openedPackId, setOpenedPackId] = useState<string | null>(null);
   const [focusedPhraseId, setFocusedPhraseId] = useState<string | null>(null);
+  const [activeAudioPhraseId, setActiveAudioPhraseId] = useState<string | null>(null);
   const [audioActionLabel, setAudioActionLabel] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -96,10 +98,15 @@ export default function LearnPackPage() {
   }, [markPackOpened, openedPackId, pack?.id]);
 
   useEffect(() => {
+    const focusFromQuery = searchParams.get("phrase");
+    if (focusFromQuery && phrases.some((item) => item.id === focusFromQuery)) {
+      setFocusedPhraseId(focusFromQuery);
+      return;
+    }
     if (!focusedPhraseId && phrases.length > 0) {
       setFocusedPhraseId(phrases[0].id);
     }
-  }, [focusedPhraseId, phrases]);
+  }, [focusedPhraseId, phrases, searchParams]);
 
   useEffect(() => {
     return () => {
@@ -139,6 +146,10 @@ export default function LearnPackPage() {
   const focusedStartSec = focusedPhrase?.packLink?.start_sec;
   const focusedEndSec = focusedPhrase?.packLink?.end_sec;
   const hasFocusedTiming = focusedStartSec != null;
+  const hasFocusedTimingEnd =
+    typeof focusedStartSec === "number" && typeof focusedEndSec === "number" && focusedEndSec > focusedStartSec;
+  const activeAudioPhrase = phraseList.find((item) => item.id === activeAudioPhraseId) ?? null;
+  const canUsePhraseAudioActions = Boolean(pack.audioUrl && hasFocusedTiming);
 
   const formatSecLabel = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 
@@ -208,6 +219,20 @@ export default function LearnPackPage() {
     audioRef.current.play().catch(() => undefined);
   };
 
+  const syncActivePhraseWithAudio = () => {
+    const currentSec = audioRef.current?.currentTime;
+    if (currentSec == null || !Number.isFinite(currentSec)) return;
+
+    const currentPhrase = phraseList.find((phrase) => {
+      const start = phrase.packLink?.start_sec;
+      if (start == null) return false;
+      const end = phrase.packLink?.end_sec ?? start + 2.5;
+      return currentSec >= start && currentSec <= end + 0.1;
+    });
+
+    setActiveAudioPhraseId(currentPhrase?.id ?? null);
+  };
+
   return (
     <div>
       <header className="pb-8">
@@ -224,8 +249,15 @@ export default function LearnPackPage() {
             className="w-full"
             src={pack.audioUrl}
             onPlay={() => markPackOpened(pack.id)}
-            onPause={() => setAudioActionLabel(null)}
-            onEnded={() => setAudioActionLabel(null)}
+            onPause={() => {
+              setAudioActionLabel(null);
+              setActiveAudioPhraseId(null);
+            }}
+            onEnded={() => {
+              setAudioActionLabel(null);
+              setActiveAudioPhraseId(null);
+            }}
+            onTimeUpdate={syncActivePhraseWithAudio}
           />
         ) : (
           <p className="text-sm text-slate-500">Audio unavailable for this pack.</p>
@@ -252,12 +284,14 @@ export default function LearnPackPage() {
       {focusedPhrase ? (
         <section className="section space-y-3">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Focused phrase</p>
+          {activeAudioPhrase ? <p className="text-xs text-slate-500">Now hearing: {activeAudioPhrase.text}</p> : null}
           <p className="text-lg font-medium">{focusedPhrase.text}</p>
           <p className="text-sm text-slate-600">{focusedPhrase.meaningJa}</p>
           {focusedPhrase.notes ? <p className="text-sm text-slate-500">{focusedPhrase.notes}</p> : null}
           {hasFocusedTiming ? (
             <p className="text-xs text-slate-500">
               Audio target {formatSecLabel(Number(focusedStartSec))} - {formatSecLabel(Number(focusedEndSec ?? Number(focusedStartSec) + 2.5))}
+              {!hasFocusedTimingEnd ? " (estimated end)" : ""}
               {audioActionLabel ? ` · ${audioActionLabel}` : ""}
             </p>
           ) : null}
@@ -286,25 +320,33 @@ export default function LearnPackPage() {
 
           {hasFocusedTiming ? (
             <div className="flex flex-wrap gap-3">
-              <button className="btn" onClick={jumpToFocused}>Jump to phrase</button>
+              <button className="btn" onClick={jumpToFocused} disabled={!canUsePhraseAudioActions}>Jump to phrase</button>
               <button
                 className="btn"
+                disabled={!canUsePhraseAudioActions}
                 onClick={() => playFocusedWindow({ leadInSec: 0, leadOutSec: 0.2, label: "Replaying phrase" })}
               >
                 Replay phrase
               </button>
               <button
                 className="btn"
+                disabled={!canUsePhraseAudioActions}
                 onClick={() => playFocusedWindow({ leadInSec: 1.2, leadOutSec: 1.1, label: "Replaying with context" })}
               >
                 Replay + context
               </button>
               <button
                 className="btn"
+                disabled={!canUsePhraseAudioActions}
                 onClick={() => playFocusedWindow({ leadInSec: 0, leadOutSec: 0.15, repeatCount: 2, label: "Repeating focused phrase" })}
               >
                 Repeat x2
               </button>
+              {activeAudioPhraseId && activeAudioPhraseId !== focusedPhrase.id ? (
+                <button className="btn" onClick={() => setFocusedPhraseId(activeAudioPhraseId)}>
+                  Focus currently playing
+                </button>
+              ) : null}
             </div>
           ) : (
             <p className="text-xs text-slate-500">No phrase timing metadata for this phrase yet. You can still study with transcript + full audio.</p>
