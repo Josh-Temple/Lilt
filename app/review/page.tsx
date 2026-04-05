@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { ReviewRating } from "@/lib/types";
 import { useLearnerProgress } from "@/lib/useLearnerProgress";
@@ -65,6 +65,23 @@ export default function ReviewPage() {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const { current, contextPromptLine, mode } = useReviewCardContext(queue, index);
+
+  useEffect(() => {
+    if (!progress || loading) return;
+    console.info("[review-queue] render state", {
+      duePhraseIds,
+      resolvedQueueLength: queue.length,
+      diagnostics: reviewDiagnostics,
+      emptyReason:
+        queue.length > 0
+          ? null
+          : reviewDiagnostics.eligibleCount === 0
+            ? "no_eligible_phrases"
+            : duePhraseIds.length > 0
+              ? "due_items_unresolved"
+              : "eligible_but_not_due",
+    });
+  }, [duePhraseIds, loading, progress, queue.length, reviewDiagnostics]);
 
   if (!progress || loading) return <p>Loading...</p>;
   if (!current) {

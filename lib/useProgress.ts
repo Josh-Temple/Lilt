@@ -27,6 +27,10 @@ export function useProgress() {
   const markPackOpened = useCallback(async (packId: string) => {
     const next = apply((draft: UserProgressV1) => progressStore.setPackOpened(draft, packId));
     if (!next) return;
+    console.info("[learner-progress] pack opened", {
+      packId,
+      duePhraseIds: progressStore.getDuePhraseIds(next),
+    });
     await syncPackProgress(next, packId, "in_progress");
   }, [apply]);
 
@@ -41,24 +45,45 @@ export function useProgress() {
       return updated;
     });
     if (!next) return;
+    console.info("[learner-progress] pack completed", {
+      packId,
+      duePhraseIds: progressStore.getDuePhraseIds(next),
+    });
     await syncPackProgress(next, packId, "completed");
   }, [apply]);
 
   const toggleSaved = useCallback(async (phraseId: string) => {
     const next = apply((draft: UserProgressV1) => progressStore.toggleSaved(draft, phraseId));
     if (!next) return;
+    console.info("[learner-progress] toggled saved", {
+      phraseId,
+      phrase: next.phraseProgress[phraseId],
+      duePhraseIds: progressStore.getDuePhraseIds(next),
+    });
     await syncPhraseProgress(next, phraseId);
   }, [apply]);
 
   const toggleFlag = useCallback(async (phraseId: string, flag: "confusing" | "wantToUse" | "favorite") => {
     const next = apply((draft: UserProgressV1) => progressStore.toggleFlag(draft, phraseId, flag));
     if (!next) return;
+    console.info("[learner-progress] toggled flag", {
+      phraseId,
+      flag,
+      phrase: next.phraseProgress[phraseId],
+      duePhraseIds: progressStore.getDuePhraseIds(next),
+    });
     await syncPhraseProgress(next, phraseId);
   }, [apply]);
 
   const reviewPhrase = useCallback(async (phraseId: string, rating: ReviewRating) => {
     const next = apply((draft: UserProgressV1) => progressStore.review(draft, phraseId, rating));
     if (!next) return;
+    console.info("[learner-progress] reviewed phrase", {
+      phraseId,
+      rating,
+      phrase: next.phraseProgress[phraseId],
+      duePhraseIds: progressStore.getDuePhraseIds(next),
+    });
     await syncReview(next, phraseId, rating);
   }, [apply]);
 

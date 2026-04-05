@@ -1,5 +1,61 @@
 # Handoff Notes
 
+## Latest session update (2026-04-05, review zero-visible verification + fix)
+
+### Goal
+Trace and fix the remaining “Review shows zero visible items” risk along the exact learner chain:
+pack action -> progress write -> due queue -> phrase hydration -> review render.
+
+### Root-cause analysis
+The previously fixed eligibility mismatch (`saved`-only vs `saved/confusing/wantToUse`) addressed one major failure mode, but verification found a second predictability gap:
+
+1. **Save could preserve stale future dueAt**
+   - `toggleSaved` flipped `saved` but kept existing `dueAt`.
+   - If a phrase had been reviewed before (future `dueAt`), save-on did not reliably make it due now.
+   - This made “I just saved/flagged in pack, but review looks empty” still plausible in some user paths.
+
+2. **State coherence signals were inconsistent**
+   - `reviewState` updates were ad-hoc across `toggleSaved`, `toggleFlag`, and `review`.
+   - This reduced observability when debugging Home dueCount vs Review queue outcomes.
+
+3. **Diagnostics coverage had a small gap**
+   - Queue-build and hydration logs existed, but render-level empty reason logging was missing.
+   - It was harder to prove whether emptiness came from eligibility, due timing, or hydration failure.
+
+### What was changed
+1. **Predictable Save -> Review path**
+   - `toggleSaved` now sets `dueAt = now` when saving on.
+   - This ensures first-step review availability remains predictable after real learner action.
+
+2. **Unified review state derivation**
+   - Added centralized `deriveReviewState` in `progressStore` based on:
+     - eligibility (`saved || confusing || wantToUse`)
+     - due timing (`dueAt <= now`)
+   - Applied in:
+     - `toggleSaved`
+     - `toggleFlag`
+     - `review`
+
+3. **End-to-end traceability improved**
+   - `useProgress` now logs for pack open/complete, save/flag, and review rating:
+     - changed phrase snapshot
+     - resulting `duePhraseIds`
+   - Review page now logs render outcome with explicit empty reason:
+     - `no_eligible_phrases`
+     - `eligible_but_not_due`
+     - `due_items_unresolved`
+
+### Outcome
+- Home dueCount and Review queue now stay coherent under normal learner actions.
+- After studying a pack and saving/flagging a phrase, review path is operational and debuggable.
+- Empty state remains truthful across:
+  - no eligible phrases
+  - eligible but not due
+  - due items unresolved during content hydration.
+
+### Next best task
+Add a compact developer-only debug panel (behind a URL query flag) that surfaces the same diagnostics without opening DevTools, while keeping learner UI unchanged by default.
+
 ## Latest session update (2026-04-05, phrase timing replay flow polish)
 
 ### Goal
