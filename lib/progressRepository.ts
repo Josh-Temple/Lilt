@@ -101,8 +101,15 @@ async function getUserOrFallback() {
   return { user, enabled: true };
 }
 
-function toServerState(saved: boolean, dueAt: string) {
-  if (!saved) return "new";
+function toServerState(phrase: {
+  saved?: boolean;
+  confusing?: boolean;
+  wantToUse?: boolean;
+  dueAt?: string;
+}) {
+  const eligible = Boolean(phrase.saved || phrase.confusing || phrase.wantToUse);
+  const dueAt = phrase.dueAt ?? new Date().toISOString();
+  if (!eligible) return "new";
   if (new Date(dueAt).getTime() <= Date.now()) return "review";
   return "learning";
 }
@@ -131,7 +138,7 @@ export async function syncPhraseProgress(progress: UserProgressV1, phraseId: str
   if (!enabled || !user?.id) return;
 
   const phrase = progress.phraseProgress[phraseId];
-  const state = toServerState(Boolean(phrase?.saved), phrase?.dueAt ?? new Date().toISOString());
+  const state = toServerState(phrase ?? {});
   await insertRows(
     "user_phrase_progress",
     {

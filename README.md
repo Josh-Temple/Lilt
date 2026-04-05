@@ -194,3 +194,23 @@ Pack study now uses phrase timing metadata more directly for fast, low-friction 
 - Audio actions reset cleanly on pause/end and timing controls are only shown when timing exists.
 - Missing timing metadata falls back to a clear, simple message while full-pack audio + transcript study remains available.
 - Phrase detail now indicates whether timing-backed replay is available from the phrase’s source pack.
+
+## Review queue reliability fix (2026-04-05)
+
+- Fixed a critical learner-loop break where review could appear empty after pack study actions.
+- Root cause was the queue eligibility mismatch:
+  - review due selection only considered `saved` phrases
+  - but pack study allows meaningful learner actions via `confusing` / `want to use` flags
+  - flagged-only phrases were persisted but excluded from due queue
+- Review eligibility is now explicit and action-aligned:
+  - a phrase is review-eligible when any of these is true: `saved` OR `confusing` OR `wantToUse`
+- Flagging `confusing`/`want to use` now also ensures immediate review eligibility (`dueAt = now`) for predictable loop behavior.
+- Added review data-flow diagnostics:
+  - queue-build diagnostics (eligible/not-due/hidden counts)
+  - unresolved due phrase resolution logging
+- Review empty state now distinguishes:
+  - no studied/saved/flagged phrases yet
+  - phrases exist but none due
+  - due IDs exist but phrase hydration failed
+
+This keeps review tied to real pack actions without changing scheduler complexity or product scope.

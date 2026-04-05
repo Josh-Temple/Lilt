@@ -31,7 +31,7 @@ function buildClozeLine(line: string, phraseText: string): string {
 }
 
 export default function ReviewPage() {
-  const { progress, duePhraseIds, reviewPhrase } = useLearnerProgress();
+  const { progress, duePhraseIds, reviewPhrase, reviewDiagnostics } = useLearnerProgress();
   const { phrases: queue, loading } = usePhrasesByIds(duePhraseIds);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -46,10 +46,35 @@ export default function ReviewPage() {
 
   if (!progress || loading) return <p>Loading...</p>;
   if (!current) {
+    const hasAnyEligible = reviewDiagnostics.eligibleCount > 0;
+    const hasDueIds = duePhraseIds.length > 0;
+
+    const emptyState = !hasAnyEligible
+      ? {
+          title: "No review items yet.",
+          description: "Study a pack and save, mark confusing, or mark want-to-use on a phrase to start your review loop.",
+          cta: "Open a pack",
+          href: "/library",
+        }
+      : hasDueIds
+        ? {
+            title: "Review items are due, but content failed to load.",
+            description: "Try reopening the source pack. If this persists, check review queue logs for unresolved phrase IDs.",
+            cta: "Open a pack",
+            href: "/library",
+          }
+        : {
+            title: "Nothing due right now.",
+            description: "You have saved/flagged phrases, but none are due yet.",
+            cta: "Back to Home",
+            href: "/",
+          };
+
     return (
       <div className="section space-y-3">
-        <p>No due items right now.</p>
-        <Link href="/library" className="btn">Open a pack</Link>
+        <p>{emptyState.title}</p>
+        <p className="text-sm text-slate-500">{emptyState.description}</p>
+        <Link href={emptyState.href} className="btn">{emptyState.cta}</Link>
       </div>
     );
   }

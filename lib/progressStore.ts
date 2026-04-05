@@ -34,6 +34,10 @@ const initPackProgress = (packId: string): PackProgress => ({
   completed: false,
 });
 
+function isReviewEligible(item: Pick<PhraseProgress, "saved" | "confusing" | "wantToUse">) {
+  return Boolean(item.saved || item.confusing || item.wantToUse);
+}
+
 const migrate = (raw: unknown): UserProgressV1 => {
   if (!raw || typeof raw !== "object") return emptyProgress();
   const candidate = raw as Partial<UserProgressV1>;
@@ -96,7 +100,15 @@ export const progressStore = {
 
   toggleFlag(progress: UserProgressV1, phraseId: string, flag: "confusing" | "wantToUse" | "favorite") {
     const base = progress.phraseProgress[phraseId] ?? initPhraseProgress(phraseId);
-    progress.phraseProgress[phraseId] = { ...base, [flag]: !base[flag] };
+    const nextValue = !base[flag];
+    const next: PhraseProgress = { ...base, [flag]: nextValue };
+
+    if ((flag === "confusing" || flag === "wantToUse") && nextValue) {
+      next.dueAt = new Date().toISOString();
+      next.reviewState = next.reviewState === "new" ? "learning" : next.reviewState;
+    }
+
+    progress.phraseProgress[phraseId] = next;
     this.save(progress);
     return progress;
   },
@@ -138,8 +150,41 @@ export const progressStore = {
   getDuePhraseIds(progress: UserProgressV1) {
     const now = Date.now();
     return Object.values(progress.phraseProgress)
-      .filter((item) => item.saved && !item.hidden && new Date(item.dueAt).getTime() <= now)
+      .filter((item) => isReviewEligible(item) && !item.hidden && new Date(item.dueAt).getTime() <= now)
       .map((item) => item.phraseId);
+  },
+
+  getReviewDiagnostics(progress: UserProgressV1) {
+    const now = Date.now();
+    let hiddenCount = 0;
+    let notEligibleCount = 0;
+    let notDueCount = 0;
+    let dueCount = 0;
+
+    Object.values(progress.phraseProgress).forEach((item) => {
+      if (!isReviewEligible(item)) {
+        notEligibleCount += 1;
+        return;
+      }
+      if (item.hidden) {
+        hiddenCount += 1;
+        return;
+      }
+      if (new Date(item.dueAt).getTime() > now) {
+        notDueCount += 1;
+        return;
+      }
+      dueCount += 1;
+    });
+
+    return {
+      trackedPhraseCount: Object.keys(progress.phraseProgress).length,
+      dueCount,
+      hiddenCount,
+      notEligibleCount,
+      notDueCount,
+      eligibleCount: dueCount + notDueCount + hiddenCount,
+    };
   },
 
   ensureSeed(progress: UserProgressV1) {

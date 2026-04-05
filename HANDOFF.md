@@ -1,5 +1,43 @@
 # Handoff Notes
 
+## Latest session update (2026-04-05, review queue flow repair)
+
+### Goal
+Repair the broken core loop where review could show zero items after real pack study actions.
+
+### Root cause
+Review due selection in `progressStore.getDuePhraseIds` only treated `saved` phrases as eligible. Pack study, however, supports `confusing` and `want to use` flags as learner intent signals. Flagged-only phrases were persisted but excluded from the due queue, making review appear empty even after valid learner actions.
+
+### What was fixed
+1. **Eligibility rule made explicit and action-aligned**
+   - A phrase is now review-eligible when `saved || confusing || wantToUse`.
+   - `getDuePhraseIds` now uses this eligibility instead of `saved` only.
+
+2. **Flag actions now reliably enter review path**
+   - When learner toggles `confusing` or `wantToUse` on, phrase `dueAt` is set to `now`.
+   - This guarantees a predictable Save/Flag -> Review path without scheduler redesign.
+
+3. **Server sync state coherence improved**
+   - `syncPhraseProgress` now derives server `state` from the same eligibility rule (not `saved` only), preserving cross-session behavior.
+
+4. **Review data-flow diagnostics added**
+   - Added queue-build diagnostics in learner progress hook (tracked/eligible/due/not-due/hidden counts).
+   - Added unresolved phrase-id logging in phrase hydration hook.
+
+5. **Review empty state made truthful**
+   - Empty state now distinguishes:
+     - no review-eligible phrases yet
+     - eligible phrases but none due yet
+     - due ids exist but phrase resolution failed
+
+### Intentionally simplified rule
+Initial review eligibility is intentionally simple:
+- eligible if any of `saved`, `confusing`, `wantToUse` is true.
+- no scheduler model changes beyond current easy/close/hard behavior.
+
+### Next logical step
+After this stability fix, improve pack-context continuity inside review (e.g., stronger source-context cues and optional rehear shortcuts) while preserving the same lightweight scheduler and queue semantics.
+
 ## Latest session update (2026-04-04, review context reliability polish)
 
 ### Goal
