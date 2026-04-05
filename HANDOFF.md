@@ -1,5 +1,30 @@
 # Handoff Notes
 
+## Latest session update (2026-04-05, PWA zero-pack troubleshooting note)
+
+### Goal
+Document likely causes when an installed PWA shows no packs so the next session can triage quickly.
+
+### What was checked
+1. Learner pack loading path:
+   - `usePacks` -> `learnerContentRepository.getPublishedPacks()` -> `/api/packs`.
+2. API behavior:
+   - `/api/packs` filters on `status=eq.published`.
+   - API returns `500` when Supabase server env is missing.
+3. Repository fallback behavior:
+   - repository can fall back to local content when API payload is absent, but deployed behavior may still look empty if client/runtime path or cache is stale.
+
+### Documentation update made
+- Added a dedicated README troubleshooting section:
+  - published-status check
+  - env-var check
+  - stale PWA cache refresh guidance
+  - auth/session context caveat
+  - direct `/api/packs` verification step
+
+### Next best task
+Add a small learner-visible diagnostics hint on Library empty state (dev-only flag first) that links the user to a self-check checklist (`published`, `env`, `/api/packs` status) without exposing internal errors by default.
+
 ## Latest session update (2026-04-05, review zero-visible verification + fix)
 
 ### Goal
