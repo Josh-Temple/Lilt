@@ -571,3 +571,28 @@ Further improve **in-pack noticing ergonomics** (tap/seek interactions around hi
 - DB-backed pack APIs for authored content.
 - Phrase reuse in admin, audio versioning, and admin protection hardening.
 - Minimalist learner UI refresh.
+
+## Latest session update (2026-04-05, PWA empty-library resilience fix)
+
+### Goal
+Resolve the user-facing PWA issue where no packs were visible, even when the app should remain usable via local fallback content.
+
+### Root cause
+`learnerContentRepository.getPublishedPacks()` only fell back to seed content when `/api/packs` failed (network/non-OK). If the API returned `200` with `packs: []` (e.g., no published rows, RLS/sync mismatch, stale runtime state), the learner UI accepted empty content and showed no packs.
+
+### What changed
+1. **Empty-list fallback activated**
+   - Updated `getPublishedPacks()` to treat API-empty (`[]`) as fallback-eligible.
+   - Behavior now:
+     - use Supabase packs when array is non-empty
+     - otherwise return local seed packs
+
+2. **Docs updated**
+   - Added README note documenting this resilience behavior and why it helps PWA reliability.
+
+### Outcome
+- Home/Library no longer get stuck empty when Supabase returns a valid-but-empty list.
+- Learner flow stays operational in fallback scenarios (offline/stale cache/misconfiguration), while still preferring Supabase-published content when present.
+
+### Next best task
+Add a lightweight content-source diagnostic badge for developers (e.g., `supabase`, `fallback:error`, `fallback:empty`) to reduce ambiguity during QA.

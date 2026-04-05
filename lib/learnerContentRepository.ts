@@ -117,7 +117,7 @@ function buildFallbackPackDetail(packId: string): LearnerPackDetail {
 export const learnerContentRepository = {
   async getPublishedPacks(): Promise<Pack[]> {
     const payload = await safeJson<{ packs?: Pack[] }>("/api/packs");
-    if (payload?.packs && Array.isArray(payload.packs)) return payload.packs;
+    if (payload?.packs && Array.isArray(payload.packs) && payload.packs.length > 0) return payload.packs;
     return contentService.getPacks();
   },
 
