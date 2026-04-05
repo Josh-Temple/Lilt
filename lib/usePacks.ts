@@ -92,6 +92,20 @@ export function usePhrasesByIds(ids: string[]) {
       .getPhrasesByIds(ids)
       .then((items) => {
         if (!active) return;
+        const resolvedIds = new Set(items.map((item) => item.id));
+        const unresolvedIds = ids.filter((id) => !resolvedIds.has(id));
+        if (unresolvedIds.length > 0) {
+          console.warn("[review-queue] unresolved phrase ids", {
+            requestedCount: ids.length,
+            resolvedCount: items.length,
+            unresolvedIds,
+          });
+        } else {
+          console.info("[review-queue] resolved phrases", {
+            requestedCount: ids.length,
+            resolvedCount: items.length,
+          });
+        }
         setPhrases(items);
       })
       .finally(() => {

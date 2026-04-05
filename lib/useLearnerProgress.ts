@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { progressStore } from "@/lib/progressStore";
 import { useProgress } from "@/lib/useProgress";
 
@@ -11,6 +11,28 @@ export function useLearnerProgress() {
     if (!progressApi.progress) return [];
     return progressStore.getDuePhraseIds(progressApi.progress);
   }, [progressApi.progress]);
+
+  const reviewDiagnostics = useMemo(() => {
+    if (!progressApi.progress) {
+      return {
+        trackedPhraseCount: 0,
+        dueCount: 0,
+        hiddenCount: 0,
+        notEligibleCount: 0,
+        notDueCount: 0,
+        eligibleCount: 0,
+      };
+    }
+    return progressStore.getReviewDiagnostics(progressApi.progress);
+  }, [progressApi.progress]);
+
+  useEffect(() => {
+    if (!progressApi.progress) return;
+    console.info("[review-queue] built due ids", {
+      duePhraseIds,
+      diagnostics: reviewDiagnostics,
+    });
+  }, [duePhraseIds, progressApi.progress, reviewDiagnostics]);
 
   const dueCount = duePhraseIds.length;
 
@@ -25,6 +47,7 @@ export function useLearnerProgress() {
     ...progressApi,
     duePhraseIds,
     dueCount,
+    reviewDiagnostics,
     recentPackProgress,
   };
 }
