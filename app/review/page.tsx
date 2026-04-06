@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { ReviewRating } from "@/lib/types";
@@ -9,6 +10,12 @@ import { usePhrasesByIds } from "@/lib/usePacks";
 
 type ReviewMode = "meaning_to_phrase" | "phrase_to_meaning" | "cloze" | "context_to_phrase";
 type SupportKind = "Transcript" | "Example" | "Note" | "Contrast";
+type ReviewEmptyState = {
+  title: string;
+  description: string;
+  cta: string;
+  href: Route;
+};
 
 function lineContainsPhrase(line: string, phraseText: string) {
   const cleanPhrase = phraseText.replace("...", "").trim();
@@ -88,25 +95,25 @@ export default function ReviewPage() {
     const hasAnyEligible = reviewDiagnostics.eligibleCount > 0;
     const hasDueIds = duePhraseIds.length > 0;
 
-    const emptyState = !hasAnyEligible
+    const emptyState: ReviewEmptyState = !hasAnyEligible
       ? {
           title: "No review items yet.",
           description: "Study a pack and save, mark confusing, or mark want-to-use on a phrase to start your review loop.",
           cta: "Open a pack",
-          href: "/library",
+          href: "/library" as Route,
         }
       : hasDueIds
         ? {
             title: "Review items are due, but content failed to load.",
             description: "Try reopening the source pack. If this persists, check review queue logs for unresolved phrase IDs.",
             cta: "Open a pack",
-            href: "/library",
+            href: "/library" as Route,
           }
         : {
             title: "Nothing due right now.",
             description: "You have saved/flagged phrases, but none are due yet.",
             cta: "Back to Home",
-            href: "/",
+            href: "/" as Route,
           };
 
     return (

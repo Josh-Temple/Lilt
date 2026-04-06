@@ -297,3 +297,11 @@ Scope remains intentionally simple:
 - Fixed a high-impact learner issue where the PWA could show zero packs even though local seed content exists.
 - `learnerContentRepository.getPublishedPacks()` now falls back to local seed packs when `/api/packs` returns an empty list, not only when the request fails.
 - This makes the Library and Home entry path recoverable in offline / stale-cache / misconfigured-Supabase states while keeping Supabase-first behavior when published packs are available.
+
+## Build warning/error follow-up (2026-04-06)
+
+- Fixed Review page typed-routes build failure on empty-state CTA links:
+  - `emptyState.href` is now typed as `Route` for `next/link` compatibility under typed routes.
+- Fixed `react-hooks/exhaustive-deps` warning in `usePhrasesByIds`:
+  - effect now derives `requestedIds` from stable `idsKey` inside the effect body
+  - dependency array remains keyed by `idsKey`, avoiding stale-capture warnings while preserving intended fetch behavior.
