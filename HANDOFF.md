@@ -621,3 +621,32 @@ Resolve the user-facing PWA issue where no packs were visible, even when the app
 
 ### Next best task
 Add a lightweight content-source diagnostic badge for developers (e.g., `supabase`, `fallback:error`, `fallback:empty`) to reduce ambiguity during QA.
+
+## Latest session update (2026-04-06, Vercel build error/warning fix)
+
+### Goal
+Resolve the reported Vercel build failure and lint warning:
+- `next/link` typed-routes type error in `app/review/page.tsx`
+- `react-hooks/exhaustive-deps` warning in `lib/usePacks.ts`
+
+### What changed
+1. **Review typed-routes fix**
+   - Added `Route` typing for review empty-state CTA target.
+   - `emptyState` is now explicitly typed (`ReviewEmptyState`) with `href: Route`, and route literals are asserted to `Route`.
+
+2. **Hook dependency warning fix**
+   - In `usePhrasesByIds`, the effect now derives `requestedIds` from stable `idsKey` inside the effect.
+   - Replaced direct `ids` captures in the effect body with `requestedIds` so deps remain `[idsKey]` without lint warning.
+
+3. **Docs update**
+   - Added a matching README section: `Build warning/error follow-up (2026-04-06)`.
+
+### Validation status
+- Local dependency install/build could not be completed in this environment due npm registry access restriction (`403` fetching `eslint-config-next`).
+- Code-level fixes were applied directly to the exact failing/warning lines from the Vercel log.
+
+### Next best task
+Re-run CI/Vercel build in an environment with npm registry access to confirm:
+1. type error at `app/review/page.tsx:116` is cleared,
+2. hook warning in `lib/usePacks.ts` is cleared,
+3. no new typed-routes regressions appear.
