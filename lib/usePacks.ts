@@ -1,18 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { learnerContentRepository, LearnerPhraseWithContext } from "@/lib/learnerContentRepository";
+import { learnerContentRepository, LearnerPhraseWithContext, PackListDiagnostics } from "@/lib/learnerContentRepository";
+import { getClientAccessToken } from "@/lib/supabase/http";
+import { hasSupabaseEnv } from "@/lib/supabase/client";
 import { Pack } from "@/lib/types";
 
 export function usePacks() {
   const [packs, setPacks] = useState<Pack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [diagnostics, setDiagnostics] = useState<PackListDiagnostics & {
+    hasSupabaseClientEnv: boolean;
+    hasAccessToken: boolean;
+    isStandalonePwa: boolean;
+  }>({
+    apiStatus: "ok",
+    apiHttpStatus: null,
+    apiError: null,
+    usedFallback: false,
+    hasSupabaseClientEnv: false,
+    hasAccessToken: false,
+    isStandalonePwa: false,
+  });
 
   useEffect(() => {
     let active = true;
 
-    learnerContentRepository.getPublishedPacks().then((next) => {
+    learnerContentRepository.getPublishedPacksWithDiagnostics().then((result) => {
       if (!active) return;
-      setPacks(next);
+      setPacks(result.packs);
+      setDiagnostics({
+        ...result.diagnostics,
+        hasSupabaseClientEnv: hasSupabaseEnv(),
+        hasAccessToken: Boolean(getClientAccessToken()),
+        isStandalonePwa:
+          typeof window !== "undefined" &&
+          (window.matchMedia?.("(display-mode: standalone)").matches || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)),
+      });
+      setLoading(false);
     });
 
     return () => {
@@ -20,7 +45,7 @@ export function usePacks() {
     };
   }, []);
 
-  return packs;
+  return { packs, loading, diagnostics };
 }
 
 export function usePackDetail(id: string) {

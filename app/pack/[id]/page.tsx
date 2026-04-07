@@ -84,6 +84,8 @@ export default function LearnPackPage() {
   const [focusedPhraseId, setFocusedPhraseId] = useState<string | null>(null);
   const [activeAudioPhraseId, setActiveAudioPhraseId] = useState<string | null>(null);
   const [audioActionLabel, setAudioActionLabel] = useState<string | null>(null);
+  const [timingReheardPhraseIds, setTimingReheardPhraseIds] = useState<string[]>([]);
+  const [doneForNowAt, setDoneForNowAt] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const replayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +152,39 @@ export default function LearnPackPage() {
     typeof focusedStartSec === "number" && typeof focusedEndSec === "number" && focusedEndSec > focusedStartSec;
   const activeAudioPhrase = phraseList.find((item) => item.id === activeAudioPhraseId) ?? null;
   const canUsePhraseAudioActions = Boolean(pack.audioUrl && hasFocusedTiming);
+  const savedFromPackCount = phraseList.filter((phrase) => progress.phraseProgress[phrase.id]?.saved).length;
+  const flaggedFromPackCount = phraseList.filter((phrase) => {
+    const phraseProgress = progress.phraseProgress[phrase.id];
+    return Boolean(phraseProgress?.confusing || phraseProgress?.wantToUse);
+  }).length;
+  const reheardFromPackCount = timingReheardPhraseIds.length;
+  const packInteractionPhraseIds = Array.from(
+    new Set(
+      phraseList
+        .filter((phrase) => {
+          const phraseProgress = progress.phraseProgress[phrase.id];
+          return Boolean(
+            phraseProgress?.saved ||
+              phraseProgress?.confusing ||
+              phraseProgress?.wantToUse ||
+              timingReheardPhraseIds.includes(phrase.id),
+          );
+        })
+        .map((phrase) => phrase.id),
+    ),
+  );
+  const dueFromThisPackCount = phraseList.filter((phrase) => {
+    const phraseProgress = progress.phraseProgress[phrase.id];
+    if (!phraseProgress) return false;
+    const isEligible = phraseProgress.saved || phraseProgress.confusing || phraseProgress.wantToUse;
+    if (!isEligible || phraseProgress.hidden) return false;
+    return new Date(phraseProgress.dueAt).getTime() <= Date.now();
+  }).length;
+  const hasReviewNextNudge = packInteractionPhraseIds.length > 0;
+  const reviewNextLabel =
+    dueFromThisPackCount > 0
+      ? `Review ${dueFromThisPackCount} phrase${dueFromThisPackCount > 1 ? "s" : ""} from this pack`
+      : "Review this next";
 
   const formatSecLabel = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 
@@ -180,6 +215,9 @@ export default function LearnPackPage() {
     const safeDuration = Math.min(10, safeEnd - safeStart);
     const segmentDurationMs = Math.max(1100, safeDuration * 1000);
     const loops = Math.max(1, repeatCount);
+    if (focusedPhrase?.id) {
+      setTimingReheardPhraseIds((current) => (current.includes(focusedPhrase.id) ? current : [...current, focusedPhrase.id]));
+    }
 
     clearReplayTimer();
     setAudioActionLabel(label);
@@ -239,6 +277,9 @@ export default function LearnPackPage() {
         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Learn pack</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">{pack.title}</h1>
         <p className="mt-1 text-sm text-slate-500">{pack.topic} · {statusLabel}</p>
+        {dueFromThisPackCount > 0 ? (
+          <p className="mt-1 text-xs text-slate-500">Due from this pack now: {dueFromThisPackCount}</p>
+        ) : null}
       </header>
 
       <section className="section space-y-4">
@@ -277,6 +318,20 @@ export default function LearnPackPage() {
             <span>Review due ({dueCount})</span>
           </Link>
         </div>
+
+        {hasReviewNextNudge ? (
+          <div className="rounded border border-slate-200 px-3 py-2 text-xs text-slate-600">
+            <p>
+              Nice focus. {packInteractionPhraseIds.length} phrase{packInteractionPhraseIds.length > 1 ? "s" : ""} from this pack were saved, flagged, or reheard.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Link href="/review" className="btn">{reviewNextLabel}</Link>
+              <span className="self-center text-slate-400">
+                Optional · Due from this pack {dueFromThisPackCount} · Total due {dueCount}
+              </span>
+            </div>
+          </div>
+        ) : null}
 
         {showTranscript ? <p className="text-sm leading-7 text-slate-700">{transcript}</p> : null}
       </section>
@@ -383,11 +438,37 @@ export default function LearnPackPage() {
       ) : null}
 
       <section className="section flex flex-wrap gap-3">
-        <button className="btn-primary" onClick={() => markPackCompleted(pack.id)}>
+        <button
+          className="btn-primary"
+          onClick={async () => {
+            await markPackCompleted(pack.id);
+            setDoneForNowAt(new Date().toISOString());
+          }}
+        >
           Done for now
         </button>
         <Link href="/review" className="btn">Go to review</Link>
       </section>
+
+      {doneForNowAt ? (
+        <section className="section space-y-2 text-sm">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Done for now</p>
+          <p className="text-slate-600">
+            Saved {savedFromPackCount} · Flagged {flaggedFromPackCount} · Reheard {reheardFromPackCount} · Due now from this pack {dueFromThisPackCount}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {dueFromThisPackCount > 0 ? (
+              <Link href="/review" className="btn">Review now</Link>
+            ) : (
+              <Link href="/" className="btn">Return home</Link>
+            )}
+            <Link href={`/pack/${pack.id}`} className="btn">Stay in this pack</Link>
+          </div>
+          {dueFromThisPackCount === 0 ? (
+            <p className="text-xs text-slate-500">No phrases from this pack are due right now. You can return later or keep studying.</p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

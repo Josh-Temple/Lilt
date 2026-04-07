@@ -7,7 +7,7 @@ import { useLearnerProgress } from "@/lib/useLearnerProgress";
 
 export default function HomePage() {
   const { progress, source, dueCount, recentPackProgress } = useLearnerProgress();
-  const packs = usePacks();
+  const { packs } = usePacks();
 
   if (!progress) return <p>Loading...</p>;
 
@@ -44,7 +44,11 @@ export default function HomePage() {
         )}
 
         <Link href="/review" className="group inline-flex w-full items-center justify-between border-b border-slate-200 pb-2 text-sm">
-          <span>Review due phrases from your packs ({dueCount})</span>
+          <span>
+            {dueCount > 0
+              ? `Review due now from your packs (${dueCount})`
+              : "Review queue is clear for now (0 due)"}
+          </span>
           <Icon name="review" className="h-4 w-4 text-slate-500 transition group-hover:text-ink" />
         </Link>
       </section>

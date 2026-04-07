@@ -154,7 +154,9 @@ export default function ReviewPage() {
     <div>
       <header className="pb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Review</h1>
-        <p className="mt-2 text-sm text-slate-500">Due {queue.length} · Item {index + 1} · from studied packs</p>
+        <p className="mt-2 text-sm text-slate-500">
+          Due now {duePhraseIds.length} · Showing {queue.length} · Item {index + 1} · from studied packs
+        </p>
       </header>
 
       <section className="section space-y-4">

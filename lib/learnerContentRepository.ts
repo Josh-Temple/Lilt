@@ -30,6 +30,15 @@ export type LearnerPackDetail = {
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
+export type PackListDiagnostics = {
+  apiStatus: "ok" | "empty" | "error";
+  apiHttpStatus: number | null;
+  apiError: string | null;
+  usedFallback: boolean;
+};
+
+type PackListPayload = { packs?: Pack[]; error?: string };
+
 async function safeJson<T>(input: RequestInfo): Promise<T | null> {
   try {
     const response = await fetch(input, { headers: jsonHeaders });
@@ -115,10 +124,62 @@ function buildFallbackPackDetail(packId: string): LearnerPackDetail {
 }
 
 export const learnerContentRepository = {
+  async getPublishedPacksWithDiagnostics(): Promise<{ packs: Pack[]; diagnostics: PackListDiagnostics }> {
+    try {
+      const response = await fetch("/api/packs", { headers: jsonHeaders });
+      const payload = (await response.json()) as PackListPayload;
+
+      if (!response.ok) {
+        const fallback = contentService.getPacks();
+        return {
+          packs: fallback,
+          diagnostics: {
+            apiStatus: "error",
+            apiHttpStatus: response.status,
+            apiError: payload?.error ?? "Failed to load /api/packs",
+            usedFallback: true,
+          },
+        };
+      }
+
+      const remotePacks = Array.isArray(payload?.packs) ? payload.packs : [];
+      if (remotePacks.length > 0) {
+        return {
+          packs: remotePacks,
+          diagnostics: {
+            apiStatus: "ok",
+            apiHttpStatus: response.status,
+            apiError: null,
+            usedFallback: false,
+          },
+        };
+      }
+
+      return {
+        packs: contentService.getPacks(),
+        diagnostics: {
+          apiStatus: "empty",
+          apiHttpStatus: response.status,
+          apiError: null,
+          usedFallback: true,
+        },
+      };
+    } catch {
+      return {
+        packs: contentService.getPacks(),
+        diagnostics: {
+          apiStatus: "error",
+          apiHttpStatus: null,
+          apiError: "Network/runtime error while loading /api/packs",
+          usedFallback: true,
+        },
+      };
+    }
+  },
+
   async getPublishedPacks(): Promise<Pack[]> {
-    const payload = await safeJson<{ packs?: Pack[] }>("/api/packs");
-    if (payload?.packs && Array.isArray(payload.packs) && payload.packs.length > 0) return payload.packs;
-    return contentService.getPacks();
+    const result = await this.getPublishedPacksWithDiagnostics();
+    return result.packs;
   },
 
   async getPackDetail(packId: string): Promise<LearnerPackDetail> {
