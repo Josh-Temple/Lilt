@@ -239,9 +239,65 @@ If the app is opened as a PWA and no packs are visible, check these in order:
    - If the PWA runs under a different session context, user-specific progress may differ from browser-tab behavior.
    - This usually does not hide packs themselves, but can make Home appear empty of "continue" context.
 
+## Pack completion -> review transition polish (2026-04-07)
+
+Pack study now gives a calmer but clearer handoff into review when the learner has taken meaningful actions.
+
+- Added a compact in-flow review nudge on pack study when the learner has interacted with phrases via:
+  - saved
+  - confusing / want-to-use flags
+  - timing-backed rehearing actions
+- Nudge remains optional and non-blocking (no modal, no auto-redirect).
+- Nudge label is activity-aware and pack-specific (e.g. “Review N phrases from this pack” when due items exist).
+- Pack header now lightly reflects pack-scoped due reality (`Due from this pack now: N`) to align with Home/Review due messaging.
+- “Done for now” now provides a minimal closure summary:
+  - what the learner captured from this pack
+  - whether review is worth doing now
+  - simple next action (Review now vs Return home)
+
+Intentionally kept simple:
+- no scheduler redesign
+- no gamification/streak mechanics
+- no heavy completion panel
+- no chatbot/tutor behavior
+
+### Follow-up refinement (2026-04-07)
+
+- Pack review-next nudge now reports pack-scoped reality more explicitly:
+  - interaction count from this pack (saved/flagged/reheard)
+  - due count from this pack
+  - total due count
+- “Done for now” summary now breaks out captured signal by type:
+  - saved
+  - flagged
+  - reheard
+- Completion next-step copy stays lightweight:
+  - `Review now` when this-pack due items exist
+  - otherwise a calm return-later cue without forcing navigation.
+
 5. **Network/API error in device context**
    - On the device, check `GET /api/packs` response.
    - If it fails, learner screens may show an empty list depending on runtime path.
+
+## Library empty-state diagnostics hint (2026-04-07)
+
+A compact learner-visible diagnostics hint is now available for the **empty Library** case behind a dev-only query flag.
+
+- Enable on Library with:
+  - `/library?debugLibrary=1`
+- Behavior:
+  - Default learner UI remains unchanged.
+  - Hint appears only when library pack list is actually empty.
+  - Tapping “Troubleshoot empty library” reveals a small self-check list.
+
+Checklist focus areas:
+- published-status reality (0 published packs vs expected content)
+- Supabase client env presence in current runtime
+- `/api/packs` state (ok/empty/error + HTTP status when available)
+- stale installed-PWA/runtime suspicion
+- auth/session-token presence mismatch across browser/PWA contexts
+
+The checklist intentionally avoids raw stack traces and heavy debug UI.
 
 ## Review loop verification hardening (2026-04-05)
 

@@ -1,5 +1,139 @@
 # Handoff Notes
 
+## Latest session update (2026-04-07, pack completion -> review transition follow-up)
+
+### Goal
+Further polish pack end-of-session flow so review handoff stays optional, calm, and due-coherent across Pack/Home/Review.
+
+### What changed
+1. **Review-next nudge wording tightened to real pack signals**
+   - `app/pack/[id]/page.tsx` now computes pack-scoped capture counts:
+     - saved
+     - flagged (`confusing` or `wantToUse`)
+     - reheard (timing-backed replay actions)
+   - Nudge now reports:
+     - count of interacted phrases from this pack
+     - due-from-this-pack count
+     - total due count
+   - CTA remains one-tap and optional.
+
+2. **Done-for-now summary made more meaningful but still minimal**
+   - Completion summary now breaks out:
+     - Saved N · Flagged N · Reheard N
+     - Due now from this pack N
+   - Next action remains lightweight:
+     - `Review now` when due-from-pack exists
+     - otherwise return-home + return-later cue.
+
+3. **Home due wording aligned with same “due now” framing**
+   - Home review row copy now says:
+     - `Review due now from your packs (N)`
+   - Keeps wording consistent with Pack/Review due language.
+
+### Intentionally kept simple
+- No scheduler changes.
+- No additional review algorithms.
+- No admin or dashboard expansion.
+- No gamification/progression layer.
+
+### Next best task
+Follow HANDOFF reliability line:
+1. continue lightweight empty-library diagnostics polish for deployed/PWA support (if more signal clarity is needed)
+2. otherwise return to timing-metadata-missing fallback microcopy tuning in pack/review continuity
+
+## Latest session update (2026-04-07, library empty-state diagnostics hint)
+
+### Goal
+Improve deployed/PWA triage for “Library looks empty” without changing normal learner UX.
+
+### What changed
+1. **Dev-only diagnostics hint added to Library empty state**
+   - `app/library/page.tsx` now supports a narrow debug flag:
+     - `/library?debugLibrary=1`
+   - The diagnostics affordance is shown only when:
+     - pack list is empty
+     - debug flag is enabled
+   - Default learner empty-state remains calm and unchanged.
+
+2. **Compact self-check list implemented**
+   - The hint expands a small checklist (not a heavy debug panel) covering:
+     - published packs likely empty vs expectation mismatch
+     - Supabase env presence in client runtime
+     - learner API status for `/api/packs` (ok/empty/error + HTTP status when known)
+     - possible stale installed-PWA/runtime state
+     - auth/session token presence caveat
+   - Includes a direct link to open `/api/packs` response for quick verification.
+
+3. **Real runtime signals added via pack hook/repository**
+   - `lib/learnerContentRepository.ts`
+     - added `getPublishedPacksWithDiagnostics()` returning packs + compact API diagnostics.
+   - `lib/usePacks.ts`
+     - now returns `packs`, `loading`, and diagnostics:
+       - api status/error/http status
+       - fallback usage
+       - client env presence
+       - access-token presence
+       - standalone/PWA-like runtime detection
+   - `app/page.tsx` updated to consume the new `usePacks()` shape.
+
+### Intentionally kept lightweight
+- No broad in-app debug console.
+- No admin dashboards.
+- No stack-trace surfacing in learner UI.
+- No pack/review loop redesign.
+
+### Next best task
+Return to learner-loop polish line:
+1. further pack/review continuity tuning (microcopy and handoff friction)
+2. timing-metadata-missing fallback experience tweaks during source-pack continuity
+
+## Latest session update (2026-04-07, pack completion -> review transition polish)
+
+### Goal
+Make the end of pack study feel complete and actionable by adding a lightweight bridge into review, while keeping due-state messaging coherent across Pack/Home/Review.
+
+### What changed
+1. **Pack flow now has an optional “review next” nudge tied to real activity**
+   - In `app/pack/[id]/page.tsx`, pack study now tracks meaningful phrase interaction from:
+     - saved
+     - confusing / want-to-use
+     - timing-backed rehearing actions
+   - When activity exists, a compact in-flow nudge appears with one-tap review action.
+   - Nudge text is pack-aware:
+     - prefers “Review N phrases from this pack” when pack-scoped due items exist
+     - otherwise keeps a lightweight generic “review next” cue.
+
+2. **Pack/Home/Review due messaging coherence improved**
+   - Pack header now shows `Due from this pack now: N` when applicable.
+   - Home review row now distinguishes:
+     - due items exist
+     - queue clear (`0 due`)
+   - Review header now surfaces both:
+     - due ids count
+     - currently resolved queue count
+   - This reduces contradictory signals when hydration or due timing differs from expectation.
+
+3. **“Done for now” now closes the session more meaningfully**
+   - Completing a pack now shows a minimal closure block with:
+     - pack interaction summary (saved/flagged/reheard count)
+     - due-now-from-pack count
+     - clear next action:
+       - `Review now` when due exists
+       - `Return home` when nothing due now
+   - Keeps completion lightweight (no modal/ceremony).
+
+### Intentionally kept simple
+- No scheduler/review algorithm changes.
+- No admin tooling expansion.
+- No gamification/progression layer.
+- No heavy dashboard/completion UI.
+- Timing rehearing usage stays as a simple signal (no scoring model).
+
+### Next best task
+Given current trajectory, the next highest-leverage micro-iteration is:
+1. **Developer-only diagnostics polish** (query-flag panel) so Pack/Home/Review due-state and hydration reasons are visible without DevTools.
+2. Alternatively, **timing-metadata-missing fallback microcopy polish** in pack/review transitions to make “no timing available” feel clearer and less abrupt.
+
 ## Latest session update (2026-04-05, PWA zero-pack troubleshooting note)
 
 ### Goal
