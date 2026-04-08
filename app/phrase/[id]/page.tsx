@@ -16,6 +16,16 @@ export default function PhraseDetailPage() {
 
   const state = progress.phraseProgress[phrase.id];
   const dueLabel = state?.dueAt ? new Date(state.dueAt).toLocaleString() : "Not scheduled";
+  const hasTimingStart = phrase.packLink?.start_sec != null;
+  const hasTimingEnd =
+    typeof phrase.packLink?.start_sec === "number" &&
+    typeof phrase.packLink?.end_sec === "number" &&
+    phrase.packLink.end_sec > phrase.packLink.start_sec;
+  const timingLabel = hasTimingStart
+    ? hasTimingEnd
+      ? "Phrase replay is available from this phrase's source pack."
+      : "Phrase replay from the source pack uses an estimated end for this phrase."
+    : "Phrase replay is unavailable for this phrase because timing data is missing. You can still use the source pack audio and transcript context.";
 
   return (
     <div>
@@ -92,9 +102,7 @@ export default function PhraseDetailPage() {
           </p>
         ) : null}
         <p className="text-xs text-slate-500">
-          {phrase.packLink?.start_sec != null
-            ? "Timing replay is available from this phrase's pack."
-            : "Timing replay is not available for this phrase yet."}
+          {timingLabel}
         </p>
         <Link href="/review" className="btn inline-flex">Continue review ({dueCount})</Link>
         {phrase.linkedPacks[0] ? <Link href={`/pack/${phrase.linkedPacks[0].id}`} className="btn inline-flex">Back to pack: {phrase.linkedPacks[0].title}</Link> : null}

@@ -149,6 +149,16 @@ export default function ReviewPage() {
           ? contextPromptLine
           : current.meaningJa;
   const supportClue = pickSupportClue(current);
+  const hasPackTimingStart = current.packLink?.start_sec != null;
+  const hasPackTimingEnd =
+    typeof current.packLink?.start_sec === "number" &&
+    typeof current.packLink?.end_sec === "number" &&
+    current.packLink.end_sec > current.packLink.start_sec;
+  const sourcePackTimingHint = !hasPackTimingStart
+    ? "Phrase replay may be unavailable there, but transcript + full-pack audio still work."
+    : hasPackTimingEnd
+      ? "Phrase replay should be available in the source pack."
+      : "Source pack replay may use an estimated phrase end.";
 
   return (
     <div>
@@ -187,6 +197,9 @@ export default function ReviewPage() {
                 <Link href={`/pack/${current.reviewContext.packId}?phrase=${current.id}`} className="btn inline-flex">Open source pack</Link>
               ) : null}
             </div>
+            {current.reviewContext?.packId ? (
+              <p className="text-xs text-slate-500">{sourcePackTimingHint}</p>
+            ) : null}
           </div>
         ) : (
           <button className="btn" onClick={() => setRevealed(true)}>Show answer</button>

@@ -1,5 +1,79 @@
 # Handoff Notes
 
+## Latest session update (2026-04-08, timing fallback copy refinement follow-up)
+
+### Goal
+Tighten the previous timing-fallback copy pass so guidance stays clear without adding button-label noise.
+
+### What changed
+1. **Pack focused-phrase copy trimmed**
+   - Removed extra full-timing explanatory line to keep focus panel compact.
+   - Kept and refined only the high-need states:
+     - partial timing (estimated end guidance)
+     - no timing (what still works + why phrase replay is unavailable)
+   - Review-return hint wording was tightened to action-focused transcript guidance.
+
+2. **Review reveal CTA simplified**
+   - `Open source pack` button text is now stable again.
+   - Timing state guidance moved to a subtle helper line under actions:
+     - replay ready
+     - estimated replay
+     - transcript + full audio fallback
+
+3. **Phrase detail wording consistency polish**
+   - Timing line keeps the same full/partial/missing logic with calmer wording and consistent apostrophe style.
+
+4. **Docs adjusted**
+   - README wording now reflects stable CTA + helper hint model.
+
+### Intentionally kept simple
+- No new components/layout regions.
+- No scheduler/review logic changes.
+- No diagnostic/tooling expansion.
+
+### Next best task
+If further polish is needed, do a quick mobile line-length pass on fallback copy in JA-heavy packs, then return to dev-only empty-library diagnostics only if support incidents continue.
+
+## Latest session update (2026-04-08, timing-missing fallback microcopy polish)
+
+### Goal
+Make packs and phrase detail feel intentional (not broken) when phrase timing metadata is missing or partial, while keeping UI compact/mobile-first.
+
+### What changed
+1. **Pack focused-phrase fallback language clarified**
+   - `app/pack/[id]/page.tsx` now uses a subtle 3-state timing message:
+     - full timing: phrase replay is ready
+     - partial timing: replay works with estimated end
+     - no timing: phrase replay unavailable due to missing timing data
+   - Missing-timing copy now explicitly points learners to what still works:
+     - full-pack audio
+     - transcript focus
+     - save/flag actions
+
+2. **Review -> source pack continuity improved for timing-missing cases**
+   - `app/review/page.tsx` source-pack CTA text now reflects timing state:
+     - replay ready
+     - estimated replay
+     - transcript + full audio fallback
+   - Keeps return-to-pack action useful even when phrase-level replay is unavailable.
+
+3. **Phrase detail timing expectations aligned**
+   - `app/phrase/[id]/page.tsx` timing note now mirrors the same 3-state model (full / partial-estimated / missing).
+   - Emphasizes source-pack audio + transcript usefulness when phrase replay timing is absent.
+
+4. **README updated**
+   - Added `Timing-missing fallback microcopy polish (2026-04-08)` documenting behavior and intentionally constrained scope.
+
+### Intentionally kept simple
+- No timing authoring or waveform tooling.
+- No review scheduler/mode expansion.
+- No additional diagnostics surfaces in learner UI.
+- No pack layout redesign.
+
+### Next best task
+1. If needed, do a very small copy pass for edge phrasing consistency (Japanese locale nuance / tiny line-length trims on mobile).
+2. Otherwise return to the HANDOFF diagnostics track for lightweight empty-library hint refinements only if real deployed support cases justify it.
+
 ## Latest session update (2026-04-07, pack completion -> review transition follow-up)
 
 ### Goal
