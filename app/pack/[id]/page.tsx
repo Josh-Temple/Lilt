@@ -150,6 +150,12 @@ export default function LearnPackPage() {
   const hasFocusedTiming = focusedStartSec != null;
   const hasFocusedTimingEnd =
     typeof focusedStartSec === "number" && typeof focusedEndSec === "number" && focusedEndSec > focusedStartSec;
+  const timingAvailability = hasFocusedTiming
+    ? hasFocusedTimingEnd
+      ? "full"
+      : "partial"
+    : "none";
+  const focusedFromPhraseQuery = Boolean(searchParams.get("phrase"));
   const activeAudioPhrase = phraseList.find((item) => item.id === activeAudioPhraseId) ?? null;
   const canUsePhraseAudioActions = Boolean(pack.audioUrl && hasFocusedTiming);
   const savedFromPackCount = phraseList.filter((phrase) => progress.phraseProgress[phrase.id]?.saved).length;
@@ -350,6 +356,11 @@ export default function LearnPackPage() {
               {audioActionLabel ? ` · ${audioActionLabel}` : ""}
             </p>
           ) : null}
+          {timingAvailability === "partial" ? (
+            <p className="text-xs text-slate-500">
+              Phrase replay uses an estimated end for this line. For finer listening, keep this line focused in the transcript while pack audio plays.
+            </p>
+          ) : null}
 
           <div className="flex flex-wrap gap-4 text-slate-600">
             <button className="btn" aria-label="Save phrase" onClick={() => toggleSaved(focusedPhrase.id)}>
@@ -404,8 +415,13 @@ export default function LearnPackPage() {
               ) : null}
             </div>
           ) : (
-            <p className="text-xs text-slate-500">No phrase timing metadata for this phrase yet. You can still study with transcript + full audio.</p>
+            <p className="text-xs text-slate-500">
+              Phrase replay is unavailable for this line because timing data is missing. You can still play full-pack audio, read the transcript, and save or flag this phrase.
+            </p>
           )}
+          {focusedFromPhraseQuery && timingAvailability === "none" ? (
+            <p className="text-xs text-slate-500">From review: keep this line focused, play the pack audio, then save/flag based on transcript context.</p>
+          ) : null}
         </section>
       ) : null}
 

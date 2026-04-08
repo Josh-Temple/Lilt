@@ -341,7 +341,28 @@ Pack study timing controls were refined to make phrase-level audio repetition mo
 - Focus panel timing cue now distinguishes partial timing metadata:
   - if `end_sec` is missing, target end is estimated (`start + 2.5s`) and labeled as estimated.
 - Phrase replay controls remain compact (`jump`, `replay phrase`, `replay + context`, `repeat x2`) and are now disabled when phrase-level audio actions cannot run (e.g., missing audio URL).
-- Review -> source-pack action now carries the phrase id query so learners can return directly to the same phrase context.
+
+## Timing-missing fallback microcopy polish (2026-04-08)
+
+Pack study and review-to-pack continuity now use calmer, clearer fallback language when phrase timing metadata is missing or partial.
+
+- Pack focused phrase panel now distinguishes three subtle states:
+  - full timing available (phrase replay ready)
+  - partial timing available (estimated end window)
+  - no timing available (phrase replay unavailable only for timing reasons)
+- Missing-timing fallback text now clarifies what still works:
+  - full-pack audio
+  - transcript study/focus
+  - save/flag actions
+- Review reveal now labels source-pack return action by timing state:
+  - keeps a stable `Open source pack` CTA
+  - adds a compact timing hint (replay ready / estimated / transcript + full audio fallback)
+- Phrase detail timing note now mirrors the same three-state language so expectations stay consistent across surfaces.
+
+Scope intentionally remains compact:
+- no timing editor/workflow expansion
+- no new review modes
+- no admin tooling additions
 
 Scope remains intentionally simple:
 - no waveform/editor features
