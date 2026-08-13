@@ -1,6 +1,7 @@
 # Lilt
 
 Lilt is an **input-first English phrase learning app** with a private authoring console.
+- Production: https://lilt-six.vercel.app/
 
 ## Current architecture (daily-usable MVP)
 
