@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { useProgress } from "@/lib/useProgress";
 import { usePacks } from "@/lib/usePacks";
 
 export default function LibraryPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading library…</p>}>
+      <LibraryContent />
+    </Suspense>
+  );
+}
+
+function LibraryContent() {
   const searchParams = useSearchParams();
   const { packs, loading, diagnostics } = usePacks();
   const { progress } = useProgress();

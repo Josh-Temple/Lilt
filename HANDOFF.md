@@ -1,5 +1,15 @@
 # Handoff Notes
 
+## Security remediation PR (2026-10-07)
+
+- Source baseline: 81ab692de04ac59a9622d1ad56fbd6ffaa270947; branch security/next-patched-20261007.
+- Next/eslint-config-next 15.5.27; lock sharp 0.35.5 and source-map-js 1.2.2. React stays 19.0.0. Node minimum aligned to 20.9.
+- Added a Library Suspense boundary after production prerender exposed missing useSearchParams boundary. Inner search/filter/diagnostic logic is preserved.
+- Clean install, typecheck, lint, production build and local-only smoke verification passed. No credentials, authentication or production writes were used.
+- Official npm audit after update: 0 critical; remaining package counts low 2 / moderate 3 / high 11 (16 total). Next has only a transitive PostCSS chain, no direct advisory. sharp/source-map-js warnings cleared. Build/CSS/lint warnings still require separate triage.
+- The default branch and production were not changed. Review/merge and verify a successful Vercel production deployment with this source before treating F-02 as remediated in production.
+- Real Supabase auth/private audio/progress flows were not exercised; repeat those in an authorized test environment before release.
+
 ## Latest session update (2026-04-08, timing fallback copy refinement follow-up)
 
 ### Goal

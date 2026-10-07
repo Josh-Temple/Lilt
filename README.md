@@ -77,12 +77,24 @@ on conflict (id) do update set is_admin = excluded.is_admin;
 
 ## Run locally
 
+Use Node.js 20.9 or later. Security verification runs without Supabase credentials.
+
 ```bash
 npm install
 npm run dev
 ```
 
 Open `http://localhost:3000` and `http://localhost:3000/admin`.
+
+## Security dependency update (2026-10-07)
+
+- Next.js and eslint-config-next are pinned to 15.5.27 with an aligned lockfile.
+- The updated lock uses sharp 0.35.5 and source-map-js 1.2.2.
+- Library query parameters remain inside a Suspense boundary so production prerendering succeeds; search and diagnostics logic is unchanged.
+- Verified: clean `npm ci --ignore-scripts`, typecheck, lint, production build and loopback-only smoke checks. No Supabase credentials or production data were used.
+- To repeat the smoke check, run `npm run build`, then `npm run start -- --hostname 127.0.0.1 --port 3007` and `node scripts/security-smoke.mjs` in another terminal. Leave Supabase environment variables unset.
+- npm audit reports no direct Next.js advisory, no sharp advisory and no source-map-js advisory after this update. Other build/lint/CSS dependency warnings remain; this is not a zero-advisory claim.
+- Production needs the reviewed PR merged and a successful Vercel deployment before this fixes the deployed application.
 
 ## Notes
 
