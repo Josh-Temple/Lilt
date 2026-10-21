@@ -1,0 +1,40 @@
+name: Security lockfile refresh (temporary)
+on:
+  push:
+    branches:
+      - security/nextjs-15-5-28-20261021
+    paths:
+      - .github/workflows/security-lockfile-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    if: github.repository == 'Josh-Temple/Lilt' && github.ref == 'refs/heads/security/nextjs-15-5-28-20261021'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Regenerate lock without scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify exact pinned versions
+        run: |
+          node - <<'NODE'
+          const p = require('./package.json'), l = require('./package-lock.json');
+          for (const name of ['next','react','react-dom']) {
+            if (l.packages[''].dependencies[name] !== p.dependencies[name] || l.packages['node_modules/'+name].version !== p.dependencies[name]) throw Error('dependency mismatch: ' + name);
+          }
+          console.log('Pinned runtime dependencies agree with package-lock.json');
+          NODE
+      - name: Commit only lockfile on the security branch
+        run: |
+          git add package-lock.json
+          if git diff --cached --quiet; then echo 'Already consistent'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build: update patched dependency lockfile'
+          git push origin HEAD:refs/heads/security/nextjs-15-5-28-20261021
