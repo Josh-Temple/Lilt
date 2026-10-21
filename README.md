@@ -395,3 +395,12 @@ Scope remains intentionally simple:
 - Fixed `react-hooks/exhaustive-deps` warning in `usePhrasesByIds`:
   - effect now derives `requestedIds` from stable `idsKey` inside the effect body
   - dependency array remains keyed by `idsKey`, avoiding stale-capture warnings while preserving intended fetch behavior.
+
+
+## Security: administrator profile permissions
+
+The 2026-10-21 migration `supabase/migrations/20261021_001_prevent_profile_admin_escalation.sql` removes the former self-update policy on `public.profiles`. Before applying it, an authenticated user could potentially update their own `is_admin` field through the Data API. After applying, unprivileged clients should only be able to read their own profile; profile changes, including role assignments, must be performed by a controlled service-role operation (never from the browser).
+
+**Deployment prerequisite:** apply the migration to the actual Supabase database independently of merging this PR. Do not assume that committing SQL updates production. Verify both that users cannot modify `is_admin` or other profile columns and that legitimate admin operations still work. Review the current values of `profiles.is_admin` for unauthorized privilege grants; revoke any suspicious privileges using a verified administrative process. The connected Supabase account does not expose this application's production project here, so the live policy remains unverified.
+
+The tracked `.env.local` contained only publishable Supabase connection settings when checked; it has been removed from version control to prevent future accidental secret commits. Set these variables in your local private `.env.local` and in Vercel environment settings rather than Git.

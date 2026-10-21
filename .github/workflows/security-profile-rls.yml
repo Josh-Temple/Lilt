@@ -1,0 +1,70 @@
+name: Verify admin profile RLS hardening
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - '.github/workflows/security-profile-rls.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: local_test_only
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Prepare minimal Supabase Auth schema in ephemeral PostgreSQL
+        run: |
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create role anon nologin;
+          create role authenticated nologin;
+          create schema auth;
+          create table auth.users (id uuid primary key);
+          create function auth.uid() returns uuid language sql stable as $$
+            select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
+          $$;
+          SQL
+      - name: Apply initial and security migrations
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260403_001_initial_admin_learning.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261021_001_prevent_profile_admin_escalation.sql
+      - name: Verify ordinary user cannot update own is_admin
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users(id) values ('11111111-1111-4111-8111-111111111111');
+          insert into public.profiles(id, is_admin) values ('11111111-1111-4111-8111-111111111111', false);
+          grant usage on schema public, auth to authenticated;
+          grant select on public.profiles to authenticated;
+          SQL
+          if psql -v ON_ERROR_STOP=1 -c "set role authenticated; update public.profiles set is_admin=true where id='11111111-1111-4111-8111-111111111111';"; then
+            echo 'Unauthorized profile update succeeded' >&2
+            exit 1
+          fi
+          profile_status="$(psql -tAc "select is_admin from public.profiles where id='11111111-1111-4111-8111-111111111111'")"
+          test "$profile_status" = 'f'
+          policy_count="$(psql -tAc "select count(*) from pg_policies where schemaname='public' and tablename='profiles' and cmd in ('UPDATE','ALL')")"
+          test "$policy_count" = '0'
+          update_grant="$(psql -tAc "select has_table_privilege('authenticated','public.profiles','UPDATE')")"
+          test "$update_grant" = 'f'
